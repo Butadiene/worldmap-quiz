@@ -199,6 +199,34 @@ body {
 .choice.wrong { background: var(--wrong); border-color: var(--wrong); color: #fff; }
 .choice:disabled { cursor: default; }
 
+/* ===== Field hint ===== */
+.field-hint { font-size: 12px; color: var(--ink-faint); margin: 8px 2px 0; line-height: 1.5; }
+
+/* ===== Explanation panel ===== */
+.explain-panel {
+  flex: 0 0 auto;
+  background: var(--panel);
+  border-top: 1px solid #e0e8eb;
+  padding: 16px 18px calc(16px + env(safe-area-inset-bottom));
+  animation: slideUp .22s ease;
+}
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.explain-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.explain-badge {
+  font-size: 12px; font-weight: 800; color: #fff; background: var(--ink-faint);
+  padding: 4px 10px; border-radius: 999px; flex: 0 0 auto;
+}
+.explain-badge.ok { background: var(--correct); }
+.explain-badge.ng { background: var(--wrong); }
+.explain-name { font-size: 22px; font-weight: 800; }
+.explain-region {
+  font-size: 12px; font-weight: 700; color: var(--primary);
+  background: var(--primary-tint); padding: 3px 9px; border-radius: 999px;
+}
+.explain-cap { font-size: 14px; font-weight: 700; color: var(--ink); margin: 12px 0 4px; }
+.explain-note { font-size: 14px; line-height: 1.7; color: var(--ink-soft); margin: 0 0 14px; }
+.btn.explain-next { width: 100%; }
+
 /* ===== Toast ===== */
 .toast {
   position: absolute; left: 50%; top: 16px; transform: translateX(-50%) translateY(-8px);

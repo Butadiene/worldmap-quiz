@@ -1,6 +1,6 @@
 /* Service worker — offline caching for 世界地図クイズ
    Bump CACHE version to force an update after changing files. */
-const CACHE = "worldquiz-v2";
+const CACHE = "worldquiz-v3";
 
 const LOCAL_ASSETS = [
   "./",
@@ -8,6 +8,7 @@ const LOCAL_ASSETS = [
   "./style.css",
   "./app.js",
   "./countries.js",
+  "./explanations.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

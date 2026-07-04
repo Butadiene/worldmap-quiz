@@ -30,6 +30,10 @@
     resultReview: $("result-review"), reviewList: $("review-list"),
     resultHome: $("result-home"), resultAgain: $("result-again"),
     offlineBadge: $("offline-badge"),
+    explainPanel: $("explain-panel"), explainBadge: $("explain-badge"),
+    explainName: $("explain-name"), explainRegion: $("explain-region"),
+    explainCap: $("explain-cap"), explainNote: $("explain-note"),
+    explainNext: $("explain-next"),
   };
 
   // ---- state ----
@@ -37,7 +41,7 @@
     features: [],       // renderable GeoJSON features that have Japanese data
     byId: new Map(),    // padded id -> feature
     pool: [],           // {id, ja, region, feature} for current settings
-    settings: { mode: "find", region: "all", count: 20 },
+    settings: { mode: "find", region: "all", count: 20, explain: true },
     queue: [], idx: 0,
     score: 0, streak: 0, answered: 0, mistakes: [],
     locked: false, fittedFeatures: null,
@@ -49,6 +53,7 @@
   const dataFor = (id) => window.COUNTRY_DATA[pad3(id)] || null;
   const nameOf = (f) => { const d = dataFor(f.id); return d ? d.ja : (f.properties && f.properties.name) || "???"; };
   const regionOf = (f) => { const d = dataFor(f.id); return d ? d.region : "other"; };
+  const infoFor = (id) => (window.COUNTRY_INFO && window.COUNTRY_INFO[pad3(id)]) || null;
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   /* ============================================================
@@ -176,6 +181,7 @@
     segGroup("mode-seg", "mode", (v) => (state.settings.mode = v));
     chipGroup("region-chips", (v) => (state.settings.region = v));
     segGroup("count-seg", "count", (v) => (state.settings.count = parseInt(v, 10)));
+    segGroup("explain-seg", "explain", (v) => (state.settings.explain = v === "1"));
 
     els.start.onclick = () => {
       if (state.features.length) { startQuiz(); return; }
@@ -186,6 +192,7 @@
     els.quit.onclick = () => { if (confirm("クイズをやめて設定に戻りますか？")) showSetup(); };
     els.resultHome.onclick = showSetup;
     els.resultAgain.onclick = startQuiz;
+    els.explainNext.onclick = () => { els.explainPanel.hidden = true; state.idx++; nextQuestion(); };
   }
 
   function segGroup(id, attr, cb) {
@@ -217,6 +224,7 @@
     els.promptBar.hidden = true;
     els.choices.hidden = true;
     els.zoomControls.hidden = true;
+    els.explainPanel.hidden = true;
     clearMapStates();
     if (state.features.length) fitToFeatures(state.features, true);
     updateOnlineBadge();
@@ -264,6 +272,7 @@
   function nextQuestion() {
     if (state.idx >= state.queue.length) { endQuiz(); return; }
     state.locked = false;
+    els.explainPanel.hidden = true;
     clearMapStates();
     updateProgress();
     const c = currentCountry();
@@ -300,7 +309,7 @@
       scoreWrong(c.ja);
       toast("正解は " + c.ja, "ng");
     }
-    advanceAfter(correct ? 900 : 1500);
+    finishTurn(c, correct, correct ? 900 : 1500);
   }
 
   // ---- NAME mode: highlight a country, pick its name ----
@@ -349,7 +358,7 @@
       scoreWrong(c.ja);
       toast("正解は " + c.ja, "ng");
     }
-    advanceAfter(correct ? 900 : 1400);
+    finishTurn(c, correct, correct ? 900 : 1400);
   }
 
   /* ============================================================
@@ -357,6 +366,31 @@
      ============================================================ */
   function scoreCorrect() { state.score++; state.streak++; state.answered++; updateStats(); }
   function scoreWrong(ja) { state.streak = 0; state.answered++; state.mistakes.push(ja); updateStats(); }
+
+  // After an answer: either show the explanation panel (解説モード) or auto-advance.
+  function finishTurn(c, correct, ms) {
+    if (state.settings.explain) {
+      showExplain(c, correct);
+    } else {
+      advanceAfter(ms);
+    }
+  }
+
+  function showExplain(c, correct) {
+    // Make sure the answered country is on screen and highlighted.
+    focusFeature(c.feature);
+    const info = infoFor(c.id);
+    els.explainBadge.textContent = correct ? "正解" : "不正解";
+    els.explainBadge.className = "explain-badge " + (correct ? "ok" : "ng");
+    els.explainName.textContent = c.ja;
+    els.explainRegion.textContent = REGION_LABEL[c.region] || "";
+    els.explainCap.textContent = info && info.cap ? "首都: " + info.cap : "";
+    els.explainCap.hidden = !(info && info.cap);
+    els.explainNote.textContent = info && info.note ? info.note : "この国の解説データはまだありません。";
+    els.promptBar.hidden = true;
+    els.choices.hidden = true;
+    els.explainPanel.hidden = false;
+  }
 
   function advanceAfter(ms) {
     setTimeout(() => { state.idx++; nextQuestion(); }, ms);
@@ -382,6 +416,7 @@
     els.progFill.style.width = "100%";
     els.promptBar.hidden = true;
     els.choices.hidden = true;
+    els.explainPanel.hidden = true;
     els.stats.hidden = true;
     clearMapStates();
 

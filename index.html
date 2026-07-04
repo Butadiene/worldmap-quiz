@@ -77,6 +77,18 @@
       <div class="choices-grid" id="choices-grid"></div>
     </section>
 
+    <!-- ===== Explanation panel (解説モード) ===== -->
+    <section class="explain-panel" id="explain-panel" hidden>
+      <div class="explain-head">
+        <span class="explain-badge" id="explain-badge">正解</span>
+        <span class="explain-name" id="explain-name">—</span>
+        <span class="explain-region" id="explain-region"></span>
+      </div>
+      <p class="explain-cap" id="explain-cap"></p>
+      <p class="explain-note" id="explain-note"></p>
+      <button class="btn primary explain-next" id="explain-next">次へ →</button>
+    </section>
+
     <!-- ===== Feedback toast ===== -->
     <div class="toast" id="toast" hidden>
       <span class="toast-icon" id="toast-icon"></span>
@@ -120,6 +132,15 @@
           </div>
         </div>
 
+        <div class="field">
+          <label class="field-label">解説モード</label>
+          <div class="segmented" id="explain-seg">
+            <button class="seg-btn" data-explain="0">オフ</button>
+            <button class="seg-btn active" data-explain="1">オン</button>
+          </div>
+          <p class="field-hint">回答するたびに、その国の首都と豆知識を表示します。</p>
+        </div>
+
         <button class="btn primary big" id="start-btn">スタート</button>
         <p class="setup-foot" id="offline-badge">● オフライン準備完了</p>
       </div>
@@ -150,6 +171,7 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
   <script src="countries.js"></script>
+  <script src="explanations.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
