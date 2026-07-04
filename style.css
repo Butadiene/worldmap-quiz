@@ -8,9 +8,9 @@
   --ink-soft: #4a6470;
   --ink-faint: #8aa2ac;
 
-  --land: #b4c6ce;
-  --land-stroke: #eef3f5;
-  --land-hover: #9bb2bc;
+  --land: #aec2cc;
+  --land-stroke: #5e7b87;
+  --land-hover: #8fa8b3;
 
   --primary: #0e7c86;
   --primary-deep: #0a5a62;
@@ -109,7 +109,8 @@ body {
 .country {
   fill: var(--land);
   stroke: var(--land-stroke);
-  stroke-width: .5px;
+  stroke-width: .7px;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   transition: fill .18s ease;
 }
