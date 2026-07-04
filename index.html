@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e7c86" />
+  <title>世界地図クイズ</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ===== Top bar ===== -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◵</span>
+        <span class="brand-name">世界地図クイズ</span>
+      </div>
+      <div class="stats" id="stats" hidden>
+        <div class="stat">
+          <span class="stat-label">スコア</span>
+          <span class="stat-value" id="score">0<span class="stat-sub" id="answered">/0</span></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">連続</span>
+          <span class="stat-value" id="streak">0</span>
+        </div>
+        <button class="icon-btn" id="quit-btn" title="やめる" aria-label="やめる">✕</button>
+      </div>
+    </header>
+
+    <!-- ===== Progress ===== -->
+    <div class="progress-track" id="progress-track" hidden>
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- ===== Map ===== -->
+    <main class="map-stage" id="map-stage">
+      <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <!-- Zoom controls -->
+      <div class="zoom-controls" id="zoom-controls" hidden>
+        <button class="icon-btn zoom" id="zoom-in" aria-label="拡大">＋</button>
+        <button class="icon-btn zoom" id="zoom-out" aria-label="縮小">－</button>
+        <button class="icon-btn zoom" id="zoom-reset" aria-label="全体表示">⤢</button>
+      </div>
+
+      <!-- Loading -->
+      <div class="overlay loading" id="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">世界地図を読み込み中…</p>
+        <p class="loading-sub">初回はオンライン接続が必要です</p>
+      </div>
+
+      <!-- Offline error -->
+      <div class="overlay error" id="load-error" hidden>
+        <p class="error-title">地図を読み込めませんでした</p>
+        <p class="error-sub">一度だけオンラインで開くと、以降はオフラインでも使えます。ネット接続を確認して、もう一度お試しください。</p>
+        <button class="btn primary" id="retry-btn">再読み込み</button>
+      </div>
+    </main>
+
+    <!-- ===== Prompt (find-on-map mode) ===== -->
+    <section class="prompt-bar" id="prompt-bar" hidden>
+      <div class="prompt-inner">
+        <span class="prompt-kicker" id="prompt-kicker">この国はどこ？</span>
+        <span class="prompt-target" id="prompt-target">—</span>
+      </div>
+      <span class="prompt-hint">地図をタップ</span>
+    </section>
+
+    <!-- ===== Choices (name-the-country mode) ===== -->
+    <section class="choices" id="choices" hidden>
+      <p class="choices-kicker">ハイライトされた国は？</p>
+      <div class="choices-grid" id="choices-grid"></div>
+    </section>
+
+    <!-- ===== Feedback toast ===== -->
+    <div class="toast" id="toast" hidden>
+      <span class="toast-icon" id="toast-icon"></span>
+      <span class="toast-text" id="toast-text"></span>
+    </div>
+
+    <!-- ===== Start / setup screen ===== -->
+    <div class="overlay setup" id="setup">
+      <div class="setup-card">
+        <p class="setup-eyebrow">白地図で国を覚える</p>
+        <h1 class="setup-title">世界地図クイズ</h1>
+        <p class="setup-lede">地図をタップして国を当てるか、光った国の名前を選ぶ。オフラインでもくり返し練習できます。</p>
+
+        <div class="field">
+          <label class="field-label">出題モード</label>
+          <div class="segmented" id="mode-seg">
+            <button class="seg-btn active" data-mode="find">地図で探す</button>
+            <button class="seg-btn" data-mode="name">名前を選ぶ</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">地域</label>
+          <div class="chips" id="region-chips">
+            <button class="chip active" data-region="all">世界全体</button>
+            <button class="chip" data-region="asia">アジア</button>
+            <button class="chip" data-region="europe">ヨーロッパ</button>
+            <button class="chip" data-region="africa">アフリカ</button>
+            <button class="chip" data-region="north_america">北アメリカ</button>
+            <button class="chip" data-region="south_america">南アメリカ</button>
+            <button class="chip" data-region="oceania">オセアニア</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">問題数</label>
+          <div class="segmented" id="count-seg">
+            <button class="seg-btn" data-count="10">10問</button>
+            <button class="seg-btn active" data-count="20">20問</button>
+            <button class="seg-btn" data-count="0">この地域すべて</button>
+          </div>
+        </div>
+
+        <button class="btn primary big" id="start-btn">スタート</button>
+        <p class="setup-foot" id="offline-badge">● オフライン準備完了</p>
+      </div>
+    </div>
+
+    <!-- ===== Result screen ===== -->
+    <div class="overlay result" id="result" hidden>
+      <div class="result-card">
+        <p class="result-eyebrow">おつかれさまでした</p>
+        <div class="result-score">
+          <span class="result-num" id="result-num">0</span>
+          <span class="result-den" id="result-den">/ 0</span>
+        </div>
+        <p class="result-pct" id="result-pct">正答率 0%</p>
+        <div class="result-review" id="result-review" hidden>
+          <p class="review-title">まちがえた国</p>
+          <div class="review-list" id="review-list"></div>
+        </div>
+        <div class="result-actions">
+          <button class="btn ghost" id="result-home">設定に戻る</button>
+          <button class="btn primary" id="result-again">もう一度</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries: loaded from CDN on first (online) run, then cached by the service worker -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="countries.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
