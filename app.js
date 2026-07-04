@@ -131,7 +131,9 @@
 
     zoom = d3.zoom()
       .scaleExtent([1, 14])
-      .on("zoom", (ev) => zoomLayer.attr("transform", ev.transform));
+      .on("start", () => svg.classed("panning", true))
+      .on("zoom", (ev) => zoomLayer.attr("transform", ev.transform))
+      .on("end", () => svg.classed("panning", false));
     svg.call(zoom);
 
     fitToFeatures(state.features, false);
