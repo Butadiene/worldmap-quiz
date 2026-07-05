@@ -38,7 +38,7 @@
 
     <!-- ===== Map ===== -->
     <main class="map-stage" id="map-stage">
-      <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+      <canvas id="map"></canvas>
 
       <!-- Zoom controls -->
       <div class="zoom-controls" id="zoom-controls" hidden>
@@ -107,23 +107,60 @@
           <div class="segmented" id="mode-seg">
             <button class="seg-btn active" data-mode="find">地図で探す</button>
             <button class="seg-btn" data-mode="name">名前を選ぶ</button>
+            <button class="seg-btn" data-mode="browse">地図を見る</button>
           </div>
         </div>
 
         <div class="field">
           <label class="field-label">地域</label>
-          <div class="chips" id="region-chips">
+          <div class="region-select" id="region-chips">
             <button class="chip active" data-region="all">世界全体</button>
-            <button class="chip" data-region="asia">アジア</button>
-            <button class="chip" data-region="europe">ヨーロッパ</button>
-            <button class="chip" data-region="africa">アフリカ</button>
-            <button class="chip" data-region="north_america">北アメリカ</button>
-            <button class="chip" data-region="south_america">南アメリカ</button>
-            <button class="chip" data-region="oceania">オセアニア</button>
+
+            <div class="region-group">
+              <span class="region-group-label">アジア</span>
+              <button class="chip" data-region="asia">アジア全体</button>
+              <button class="chip" data-region="east_asia">東アジア</button>
+              <button class="chip" data-region="southeast_asia">東南アジア</button>
+              <button class="chip" data-region="south_asia">南アジア</button>
+              <button class="chip" data-region="central_asia">中央アジア</button>
+              <button class="chip" data-region="west_asia">西アジア（中東）</button>
+            </div>
+
+            <div class="region-group">
+              <span class="region-group-label">ヨーロッパ</span>
+              <button class="chip" data-region="europe">ヨーロッパ全体</button>
+              <button class="chip" data-region="north_europe">北ヨーロッパ</button>
+              <button class="chip" data-region="west_europe">西ヨーロッパ</button>
+              <button class="chip" data-region="east_europe">東ヨーロッパ</button>
+              <button class="chip" data-region="south_europe">南ヨーロッパ</button>
+            </div>
+
+            <div class="region-group">
+              <span class="region-group-label">アフリカ</span>
+              <button class="chip" data-region="africa">アフリカ全体</button>
+              <button class="chip" data-region="north_africa">北アフリカ</button>
+              <button class="chip" data-region="west_africa">西アフリカ</button>
+              <button class="chip" data-region="east_africa">東アフリカ</button>
+              <button class="chip" data-region="central_africa">中部アフリカ</button>
+              <button class="chip" data-region="southern_africa">南部アフリカ</button>
+            </div>
+
+            <div class="region-group">
+              <span class="region-group-label">アメリカ</span>
+              <button class="chip" data-region="north_america">北アメリカ</button>
+              <button class="chip" data-region="central_america">中央アメリカ</button>
+              <button class="chip" data-region="caribbean">カリブ</button>
+              <button class="chip" data-region="south_america">南アメリカ</button>
+            </div>
+
+            <div class="region-group">
+              <span class="region-group-label">オセアニア</span>
+              <button class="chip" data-region="oceania">オセアニア</button>
+            </div>
           </div>
         </div>
 
-        <div class="field">
+        <div class="field" id="count-field">
           <label class="field-label">問題数</label>
           <div class="segmented" id="count-seg">
             <button class="seg-btn" data-count="10">10問</button>
@@ -132,7 +169,7 @@
           </div>
         </div>
 
-        <div class="field">
+        <div class="field" id="explain-field">
           <label class="field-label">解説モード</label>
           <div class="segmented" id="explain-seg">
             <button class="seg-btn" data-explain="0">オフ</button>
