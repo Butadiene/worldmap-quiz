@@ -80,7 +80,10 @@
         <span class="prompt-kicker" id="prompt-kicker">この国はどこ？</span>
         <span class="prompt-target" id="prompt-target">—</span>
       </div>
-      <span class="prompt-hint">地図をタップ</span>
+      <div class="prompt-side">
+        <span class="prompt-hint" id="prompt-hint">地図をタップ</span>
+        <button class="prompt-giveup" id="giveup-btn" hidden>ギブアップ</button>
+      </div>
     </section>
 
     <!-- ===== Choices (name-the-country mode) ===== -->
@@ -118,9 +121,10 @@
 
         <div class="field">
           <label class="field-label">出題モード</label>
-          <div class="segmented four" id="mode-seg">
+          <div class="segmented" id="mode-seg">
             <button class="seg-btn active" data-mode="find">地図で探す</button>
             <button class="seg-btn" data-mode="name">名前を選ぶ</button>
+            <button class="seg-btn" data-mode="explore">たんけん</button>
             <button class="seg-btn" data-mode="browse">地図を見る</button>
             <button class="seg-btn" data-mode="progress">成績マップ</button>
           </div>

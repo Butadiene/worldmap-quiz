@@ -24,6 +24,9 @@
   --m-mid:  #e8c04a;      /* mastery map: 学習中 */
   --m-weak: #e07a6a;      /* mastery map: 苦手 */
 
+  --heat-hot:  #d13b2a;   /* たんけん: 近い（あつい） */
+  --heat-cold: #9fb8c4;   /* たんけん: 遠い（つめたい） */
+
   --shadow: 0 10px 30px -12px rgba(16, 48, 58, .35);
   --shadow-sm: 0 4px 14px -6px rgba(16, 48, 58, .3);
   --radius: 16px;
@@ -190,6 +193,14 @@ body {
   flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--primary);
   background: var(--primary-tint); padding: 7px 12px; border-radius: 999px;
 }
+/* たんけんモード: 試行カウンタ（上）とギブアップ（下）を右側に縦積み */
+.prompt-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.prompt-giveup {
+  border: 1.5px solid #d6e0e4; background: var(--panel); color: var(--ink-soft);
+  font-family: inherit; font-weight: 700; font-size: 12px;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: transform .12s;
+}
+.prompt-giveup:active { transform: scale(.96); }
 
 /* ===== Choices (name mode) ===== */
 .choices {
@@ -297,6 +308,9 @@ body {
 .seg-btn.active { background: var(--panel); color: var(--primary); box-shadow: var(--shadow-sm); }
 /* Four modes share the row: shrink text a touch so labels stay on one line even at 360px. */
 .segmented.four .seg-btn { font-size: 11px; padding: 10px 2px; letter-spacing: -.01em; }
+/* Five output modes don't fit one row, so mode-seg wraps to two (3 + 2). */
+#mode-seg { flex-wrap: wrap; }
+#mode-seg .seg-btn { flex: 1 1 30%; font-size: 11px; padding: 10px 2px; letter-spacing: -.01em; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {

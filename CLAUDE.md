@@ -34,6 +34,7 @@ Region keys (`asia`, `europe`, `africa`, `north_america`, `south_america`, `ocea
 
 - **find** (`地図で探す`): show a name, user taps the country polygon (`onCountryClick`).
 - **name** (`名前を選ぶ`): highlight a country, user picks from 4 choices — the correct one plus 3 distractors drawn from the same pool (`askName`).
+- **explore** (`たんけん`): Globle-style. The target is hidden; each tapped country is tinted a heat color by its great-circle distance to the target (`d3.geoCentroid` + `d3.geoDistance`, `state.paint` reused as the heat map, fresh per question in `askExplore`). Guesses are pure sonar — they never call `recordAnswer`/`scoreWrong`. Only discovery (`finishTurn(c, guesses<=4, …)`) or ギブアップ (`scoreWrong` + `finishTurn(c, false, …)`) records stats, exactly once each via `finishTurn`. Survival (count=-1) is treated as a 10-question run here, not lives.
 
 Both converge on `finishTurn`, which either shows the explanation panel (when explain is on) or auto-advances after a delay.
 

@@ -64,7 +64,8 @@
     livesStat: $("lives-stat"), lives: $("lives"), resultEyebrow: $("result-eyebrow"),
     progTrack: $("progress-track"), progFill: $("progress-fill"),
     promptBar: $("prompt-bar"), promptKicker: $("prompt-kicker"),
-    promptTarget: $("prompt-target"), choices: $("choices"),
+    promptTarget: $("prompt-target"), promptHint: $("prompt-hint"),
+    giveup: $("giveup-btn"), choices: $("choices"),
     choicesGrid: $("choices-grid"), toast: $("toast"), toastIcon: $("toast-icon"),
     toastText: $("toast-text"), zoomControls: $("zoom-controls"),
     zoomIn: $("zoom-in"), zoomOut: $("zoom-out"), zoomReset: $("zoom-reset"),
@@ -94,6 +95,10 @@
     survival: false,    // サバイバル（問題数=-1）: ライフ制の無限出題
     lives: 3,           // 残りライフ（サバイバルのみ）
     survivalOver: false, // ライフ0でこの問のフィードバック後に endQuiz へ向かう
+    exploreGuesses: 0,  // たんけん: この問の推測回数
+    exploreTried: null, // たんけん: この問で推測済みの id（Set・重複タップ判定）
+    exploreFound: 0,    // たんけん: 発見できた問の数（平均計算用）
+    exploreTotalGuesses: 0, // たんけん: 発見できた問の推測回数合計（平均計算用）
     stats: {},          // padded id -> { c: 正解数, w: 誤答数, last: 最終出題epochMs }
     reasks: {},         // padded id -> このセッションで再挿入した回数
     locked: false, fittedFeatures: null,
@@ -120,6 +125,7 @@
   const paths = new Map();         // padded id -> Path2D (projected outline)
   let landPath = null;             // every country in one Path2D (batched fill/stroke)
   const boundsMap = new Map();     // padded id -> [[x0,y0],[x1,y1]] projected bbox (culling)
+  const geoCentroids = new Map();  // padded id -> [lon,lat] spherical centroid (たんけん距離計算)
   // Gesture blit snapshot: the last sharp frame + the transform it was drawn at.
   let snapCanvas = null;           // reused offscreen backing buffer
   let snap = null;                 // { canvas, t0:{x,y,k} } while a gesture snapshot is live
@@ -335,6 +341,10 @@
     state.allCountries = state.features.map(
       (f) => ({ id: pad3(f.id), ja: nameOf(f), region: regionOf(f), feature: f })
     );
+    // Spherical centroids for たんけん distance hints — the great-circle distance uses
+    // real lon/lat, NOT the projected-plane centroid geoPath.centroid returns.
+    geoCentroids.clear();
+    state.features.forEach((f) => geoCentroids.set(pad3(f.id), d3.geoCentroid(f)));
   }
 
   /* ============================================================
@@ -419,6 +429,8 @@
     COLORS.mGood = g("--m-good", "#4caf7d");   // mastery map buckets
     COLORS.mMid = g("--m-mid", "#e8c04a");
     COLORS.mWeak = g("--m-weak", "#e07a6a");
+    COLORS.heatHot = g("--heat-hot", "#d13b2a");    // たんけん: 近い / 遠い の熱色
+    COLORS.heatCold = g("--heat-cold", "#9fb8c4");
   }
 
   // Bucket a country by its recorded performance → a fill color, or null for "not seen yet".
@@ -893,13 +905,14 @@
     // Wrap so the click MouseEvent is never passed in as reviewIds.
     els.resultAgain.onclick = () => startQuiz();
     els.resultRetryMissed.onclick = () => startQuiz([...new Set(state.mistakes)]);
+    els.giveup.onclick = onGiveUp;
     els.explainNext.onclick = onExplainNext;
   }
 
   // Restore a previously saved setup, validating every field before applying it.
   function applySavedSettings(s) {
     if (!s || typeof s !== "object") return;
-    const modes = ["find", "name", "browse", "progress"];
+    const modes = ["find", "name", "explore", "browse", "progress"];
     if (modes.indexOf(s.mode) !== -1) {
       state.settings.mode = s.mode;
       activateSeg("mode-seg", "mode", s.mode);
@@ -940,7 +953,8 @@
     if (els.countField) els.countField.hidden = noQuiz;
     if (els.explainField) els.explainField.hidden = noQuiz;
     if (els.soundField) els.soundField.hidden = noQuiz;
-    els.start.textContent = v === "browse" ? "地図を見る" : v === "progress" ? "成績を見る" : "スタート";
+    els.start.textContent = v === "browse" ? "地図を見る" : v === "progress" ? "成績を見る"
+      : v === "explore" ? "たんけんに出る" : "スタート";
   }
 
   function segGroup(id, attr, cb) {
@@ -1019,7 +1033,9 @@
     if (state.pool.length < 1) { alert("この地域には収録国がありません。"); return; }
 
     // サバイバルは「問題数=-1 かつ 復習でない」ときだけ。復習クイズは常に通常ルール。
-    const survival = !(reviewIds && reviewIds.length) && state.settings.count === -1;
+    // たんけんはライフ制と相性が悪いのでサバイバルにしない（-1 は 10 問扱い）。
+    const isExplore = state.settings.mode === "explore";
+    const survival = !(reviewIds && reviewIds.length) && state.settings.count === -1 && !isExplore;
 
     let queue;
     if (reviewIds && reviewIds.length) {
@@ -1029,13 +1045,18 @@
       const now = Date.now();
       const keyed = state.pool.map((c) => ({ id: c.id, key: Math.pow(Math.random(), 1 / weightFor(c.id, now)) }));
       keyed.sort((a, b) => b.key - a.key);
-      const n = state.settings.count > 0 ? Math.min(state.settings.count, keyed.length) : keyed.length;
+      let n;
+      if (state.settings.count > 0) n = Math.min(state.settings.count, keyed.length);
+      else if (state.settings.count === -1 && isExplore) n = Math.min(10, keyed.length);  // たんけんのサバイバル指定は 10 問
+      else n = keyed.length;                                                              // この地域すべて（またはサバイバルの初期キュー）
       queue = shuffle(keyed.slice(0, n).map((x) => x.id));   // 出題順はランダム化
     }
     state.queue = queue;
     state.idx = 0; state.score = 0; state.streak = 0; state.answered = 0;
     state.mistakes = []; state.reasks = {}; state.locked = false;
     state.survival = survival; state.lives = 3; state.survivalOver = false;
+    state.exploreGuesses = 0; state.exploreTried = new Set();
+    state.exploreFound = 0; state.exploreTotalGuesses = 0;
     state.browsing = false;
     state.progressView = false;
     state.paint = null;                    // clear any mastery coloring from a prior view
@@ -1087,11 +1108,12 @@
     // A previous wrong answer / explanation panel may have left the map zoomed onto
     // one country. Re-fit before the next FIND question so the player isn't hunting
     // from a stale close-up. NAME mode re-frames itself via focusFeature, so skip it there.
-    if (state.settings.mode === "find" && state.viewMode === "focus") {
+    if ((state.settings.mode === "find" || state.settings.mode === "explore") && state.viewMode === "focus") {
       fitToFeatures(state.fittedFeatures || state.features, true);
     }
     const c = currentCountry();
     if (state.settings.mode === "find") askFind(c);
+    else if (state.settings.mode === "explore") askExplore(c);
     else askName(c);
   }
 
@@ -1099,8 +1121,97 @@
   function askFind(c) {
     els.choices.hidden = true;
     els.promptBar.hidden = false;
+    els.giveup.hidden = true;                 // たんけん専用ボタン
+    els.promptHint.textContent = "地図をタップ";
     els.promptKicker.textContent = "この国はどこ？";
     els.promptTarget.textContent = c.ja;
+  }
+
+  /* ============================================================
+     たんけん (explore) — Globle 型。謎の国を、タップした国が距離に応じて
+     熱色に染まる手がかりを頼りに探し当てる。推測タップは stats を汚さない
+     （ソナーとして使っただけ）— 発見/ギブアップのみ finishTurn を通す。
+     ============================================================ */
+  // ---- EXPLORE mode: hidden target, tap countries for distance heat hints ----
+  function askExplore(c) {
+    els.choices.hidden = true;
+    els.promptBar.hidden = false;
+    els.giveup.hidden = false;
+    els.promptKicker.textContent = "なぞの国はどこ？";
+    els.promptTarget.textContent = "???";
+    state.exploreGuesses = 0;
+    state.exploreTried = new Set();
+    state.paint = new Map();                   // 問ごとに真新しい熱マップへ張り替え（他モードへ漏れない）
+    updateExploreHint();
+    render();
+  }
+
+  function updateExploreHint() {
+    els.promptHint.textContent = "試行 " + state.exploreGuesses + "回";
+  }
+
+  // Great-circle distance between two countries' spherical centroids, in km.
+  function exploreKm(f, c) {
+    const a = geoCentroids.get(pad3(f.id));
+    const b = geoCentroids.get(c.id);
+    if (!a || !b) return Infinity;
+    return d3.geoDistance(a, b) * 6371;        // 地球半径 6371km
+  }
+
+  // Toast wording by distance band (数値は toLocaleString で桁区切り)。
+  function heatMsg(km) {
+    const s = Math.round(km).toLocaleString();
+    if (km >= 6500) return "❄️ つめたい… 約" + s + "km";
+    if (km >= 3000) return "🌤 まだ遠い 約" + s + "km";
+    if (km >= 1000) return "🔥 あつい！ 約" + s + "km";
+    return "🔥🔥 めちゃくちゃ近い！ 約" + s + "km";
+  }
+
+  function onExploreGuess(f) {
+    const c = currentCountry();
+    const gid = pad3(f.id);
+
+    if (gid === c.id) {                         // 発見！
+      state.locked = true;
+      state.exploreGuesses++;
+      els.giveup.hidden = true;
+      setMark(c.id, "correct");
+      render();
+      scoreCorrect();
+      state.exploreFound++;
+      state.exploreTotalGuesses += state.exploreGuesses;
+      toast("🎉 " + state.exploreGuesses + "回で発見！", "ok");
+      // 4回以内で見つけたら「正解」として stats に記録（finishTurn → recordAnswer）。
+      finishTurn(c, state.exploreGuesses <= 4, 1600);
+      return;
+    }
+
+    const km = exploreKm(f, c);
+    // 未タップの国だけ試行を数え、熱色を塗る。同じ国の再タップはトーストだけ再表示。
+    if (!state.exploreTried.has(gid)) {
+      state.exploreTried.add(gid);
+      state.exploreGuesses++;
+      const t = Math.pow(Math.max(0, 1 - km / 6500), 1.35);   // 6500km 以遠は t=0
+      state.paint.set(gid, lerpColor(COLORS.heatCold, COLORS.heatHot, t));
+      render();
+      updateExploreHint();
+    }
+    toast(heatMsg(km), "");
+  }
+
+  // ギブアップ: 正解を見せ、scoreWrong で mistakes に入れて（復習ボタンが効く）finishTurn へ。
+  function onGiveUp() {
+    if (state.locked || state.settings.mode !== "explore") return;
+    state.locked = true;
+    els.giveup.hidden = true;
+    const c = currentCountry();
+    setMark(c.id, "correct");
+    render();
+    toast("正解は " + c.ja + " でした", "ng");
+    scoreWrong(c.id);
+    // find の不正解と同じく、解説オフのときだけ自前でズーム（オンなら showExplain が寄せる）。
+    if (!state.settings.explain) focusFeature(c.feature);
+    finishTurn(c, false, 2200);
   }
 
   // Pixel-exact hit testing: test the pointer against the SAME cached Path2D objects
@@ -1150,7 +1261,9 @@
     if (!f) return;                        // tapped ocean — ignore
 
     if (state.browsing) { showBrowseDetail(f); return; }
-    if (state.settings.mode !== "find" || state.locked) return;
+    if (state.locked) return;
+    if (state.settings.mode === "explore") { onExploreGuess(f); return; }
+    if (state.settings.mode !== "find") return;
 
     state.locked = true;
     const c = currentCountry();
@@ -1282,8 +1395,8 @@
       // ライフの減算はここ一箇所だけ（二重減算防止）。無限出題なので再挿入はしない。
       if (!correct) { state.lives--; updateLives(); }
       if (state.lives <= 0) state.survivalOver = true;
-    } else if (!correct) {
-      reaskLater(c.id);
+    } else if (!correct && state.settings.mode !== "explore") {
+      reaskLater(c.id);   // たんけんは固定キュー（再挿入しない）
     }
     if (state.settings.explain) {
       showExplain(c, correct);
@@ -1485,7 +1598,10 @@
       const pct = total ? Math.round((state.score / total) * 100) : 0;
       els.resultNum.textContent = state.score;
       els.resultDen.textContent = "/ " + total;
-      els.resultPct.textContent = "正答率 " + pct + "%";
+      // たんけんは「発見できた問の平均試行回数」を見せる（発見ゼロなら正答率）。
+      els.resultPct.textContent = (state.settings.mode === "explore" && state.exploreFound)
+        ? "平均 " + (state.exploreTotalGuesses / state.exploreFound).toFixed(1) + "回で発見"
+        : "正答率 " + pct + "%";
       celebrate = total > 0 && state.score === total;   // 全問正解
     }
 
