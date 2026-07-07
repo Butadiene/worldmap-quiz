@@ -20,6 +20,10 @@
   --correct: #1c9e5b;
   --wrong: #d64444;
 
+  --m-good: #4caf7d;      /* mastery map: 習得 */
+  --m-mid:  #e8c04a;      /* mastery map: 学習中 */
+  --m-weak: #e07a6a;      /* mastery map: 苦手 */
+
   --shadow: 0 10px 30px -12px rgba(16, 48, 58, .35);
   --shadow-sm: 0 4px 14px -6px rgba(16, 48, 58, .3);
   --radius: 16px;
@@ -76,6 +80,7 @@ body {
 .stat-label { font-size: 10px; color: var(--ink-faint); letter-spacing: .12em; }
 .stat-value { font-size: 20px; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums; }
 .stat-sub { font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+#lives { color: var(--wrong); letter-spacing: 1px; }
 
 .icon-btn {
   border: none; background: #eef3f5; color: var(--ink-soft);
@@ -126,6 +131,25 @@ body {
   width: 40px; height: 40px; font-size: 18px; font-weight: 700;
   background: var(--panel); color: var(--ink); box-shadow: var(--shadow-sm);
 }
+
+/* Mastery legend (成績マップ) — bottom-left card, opposite the zoom controls */
+.mastery-legend {
+  position: absolute; left: 12px; bottom: 12px; z-index: 4;
+  display: flex; flex-wrap: wrap; gap: 6px 12px;
+  background: var(--panel); box-shadow: var(--shadow-sm);
+  padding: 8px 12px; border-radius: 12px;
+  font-size: 11px; font-weight: 700; color: var(--ink-soft);
+  max-width: calc(100% - 76px);
+}
+.ml-item { display: inline-flex; align-items: center; gap: 5px; }
+.ml-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto;
+  border: 1px solid rgba(16, 48, 58, .12);
+}
+.ml-good { background: var(--m-good); }
+.ml-mid  { background: var(--m-mid); }
+.ml-weak { background: var(--m-weak); }
+.ml-none { background: var(--land); }
 
 /* ===== Overlays ===== */
 .overlay {
@@ -214,6 +238,7 @@ body {
 }
 .explain-cap { font-size: 14px; font-weight: 700; color: var(--ink); margin: 12px 0 4px; }
 .explain-note { font-size: 14px; line-height: 1.7; color: var(--ink-soft); margin: 0 0 14px; }
+.explain-stats { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 14px; }
 .btn.explain-next { width: 100%; }
 
 /* ===== Toast ===== */
@@ -258,6 +283,7 @@ body {
 .setup-eyebrow { color: var(--primary); font-weight: 800; font-size: 12px; letter-spacing: .14em; margin: 0 0 6px; }
 .setup-title { font-size: 30px; font-weight: 800; margin: 0 0 10px; letter-spacing: .01em; }
 .setup-lede { color: var(--ink-soft); font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
+.setup-rank { color: var(--primary); font-weight: 700; font-size: 13px; margin: -14px 0 24px; }
 
 .field { margin-bottom: 20px; }
 .field-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); letter-spacing: .06em; margin-bottom: 9px; }
@@ -269,6 +295,8 @@ body {
   border-radius: 9px; cursor: pointer; transition: all .14s;
 }
 .seg-btn.active { background: var(--panel); color: var(--primary); box-shadow: var(--shadow-sm); }
+/* Four modes share the row: shrink text a touch so labels stay on one line even at 360px. */
+.segmented.four .seg-btn { font-size: 11px; padding: 10px 2px; letter-spacing: -.01em; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
@@ -311,8 +339,8 @@ body {
   background: var(--panel); border: 1px solid #e4ebed; color: var(--ink);
   font-size: 13px; font-weight: 700; padding: 6px 11px; border-radius: 8px;
 }
-.result-actions { display: flex; gap: 10px; }
-.result-actions .btn { flex: 1; }
+.result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.result-actions .btn { flex: 1 1 40%; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

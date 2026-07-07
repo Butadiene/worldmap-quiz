@@ -36,6 +36,12 @@
   };
   Object.keys(SUBREGIONS).forEach((k) => { SUBREGIONS[k].set = new Set(SUBREGIONS[k].ids); });
 
+  // Reverse lookup id -> subregion key, so distractors can be drawn from the nearest ring.
+  const SUBREGION_OF = new Map();
+  Object.keys(SUBREGIONS).forEach((k) => {
+    SUBREGIONS[k].ids.forEach((id) => SUBREGION_OF.set(id, k));
+  });
+
   function inRegion(f, r) {
     if (r === "all") return true;
     const sub = SUBREGIONS[r];
@@ -52,8 +58,10 @@
   const els = {
     stage: $("map-stage"), loading: $("loading"), error: $("load-error"),
     retry: $("retry-btn"), setup: $("setup"), start: $("start-btn"),
+    setupRank: $("setup-rank"),
     result: $("result"), stats: $("stats"), score: $("score"),
     answered: $("answered"), streak: $("streak"), quit: $("quit-btn"),
+    livesStat: $("lives-stat"), lives: $("lives"), resultEyebrow: $("result-eyebrow"),
     progTrack: $("progress-track"), progFill: $("progress-fill"),
     promptBar: $("prompt-bar"), promptKicker: $("prompt-kicker"),
     promptTarget: $("prompt-target"), choices: $("choices"),
@@ -63,27 +71,38 @@
     resultNum: $("result-num"), resultDen: $("result-den"), resultPct: $("result-pct"),
     resultReview: $("result-review"), reviewList: $("review-list"),
     resultHome: $("result-home"), resultAgain: $("result-again"),
+    resultRetryMissed: $("result-retry-missed"),
     offlineBadge: $("offline-badge"),
     explainPanel: $("explain-panel"), explainBadge: $("explain-badge"),
     explainName: $("explain-name"), explainRegion: $("explain-region"),
     explainCap: $("explain-cap"), explainNote: $("explain-note"),
-    explainNext: $("explain-next"),
+    explainStats: $("explain-stats"), explainNext: $("explain-next"),
     countField: $("count-field"), explainField: $("explain-field"),
+    soundField: $("sound-field"),
+    masteryLegend: $("mastery-legend"),
   };
 
   // ---- state ----
   const state = {
     features: [],       // renderable GeoJSON features that have Japanese data
     byId: new Map(),    // padded id -> feature
+    allCountries: [],   // {id, ja, region, feature} for every renderable country (distractor source)
     pool: [],           // {id, ja, region, feature} for current settings
-    settings: { mode: "find", region: "all", count: 20, explain: true },
+    settings: { mode: "find", region: "all", count: 20, explain: true, sound: false },
     queue: [], idx: 0,
-    score: 0, streak: 0, answered: 0, mistakes: [],
+    score: 0, streak: 0, answered: 0, mistakes: [],   // mistakes: padded ids this session
+    survival: false,    // サバイバル（問題数=-1）: ライフ制の無限出題
+    lives: 3,           // 残りライフ（サバイバルのみ）
+    survivalOver: false, // ライフ0でこの問のフィードバック後に endQuiz へ向かう
+    stats: {},          // padded id -> { c: 正解数, w: 誤答数, last: 最終出題epochMs }
+    reasks: {},         // padded id -> このセッションで再挿入した回数
     locked: false, fittedFeatures: null,
     marks: new Map(),   // padded id -> "target" | "correct" | "wrong" | "hi"
     transform: null,    // current d3 zoom transform
     panning: false,     // true during an active drag/pinch
     browsing: false,    // "地図を見る" (study) mode active
+    progressView: false, // "成績マップ" (mastery) mode active — a browse variant
+    paint: null,        // null | Map(padded id -> fill color) for mastery-colored land
     labels: false,      // draw country-name labels on the map
     labelData: [],      // [{name, cx, cy, w}] precomputed per fit
     viewMode: "fit",    // "fit" | "focus" — how to re-frame after a resize
@@ -94,19 +113,161 @@
   let cssW = 0, cssH = 0, dpr = 1, pulseRAF = 0;
   const COLORS = {};    // filled from CSS custom properties at init
 
+  // localStorage wrapper — Safari private mode etc. can throw, so degrade quietly.
+  const store = {
+    get(key, fallback) {
+      try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); }
+      catch (e) { return fallback; }
+    },
+    set(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+    },
+  };
+  const STATS_KEY = "wq.stats.v1";
+  const SETTINGS_KEY = "wq.settings.v1";
+  const BEST_KEY = "wq.best.v1";   // サバイバル自己ベスト: { [mode+":"+region]: 正解数 }
+
   const pad3 = (id) => String(id).padStart(3, "0");
   const dataFor = (id) => window.COUNTRY_DATA[pad3(id)] || null;
   const nameOf = (f) => { const d = dataFor(f.id); return d ? d.ja : (f.properties && f.properties.name) || "???"; };
   const regionOf = (f) => { const d = dataFor(f.id); return d ? d.region : "other"; };
   const infoFor = (id) => (window.COUNTRY_INFO && window.COUNTRY_INFO[pad3(id)]) || null;
+  // Prepend the flag emoji to a name for panels/result chips; degrade gracefully when absent.
+  const withFlag = (id, name) => { const d = dataFor(id); return d && d.flag ? d.flag + " " + name : name; };
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // Haptic feedback where supported; silently ignored elsewhere (desktop, iOS Safari…).
+  const buzz = (pattern) => { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch (e) {} } };
+
+  /* ============================================================
+     Sound effects — WebAudio, fully synthesized (no assets), OFF by default.
+     ============================================================ */
+  let audioCtx = null;
+  // Create the AudioContext lazily, only when sound is on and a sound is first
+  // requested (always inside a user tap → satisfies autoplay policy). Failures
+  // are swallowed to silence. Returns null when sound is off / unavailable.
+  function ensureAudio() {
+    if (!state.settings.sound) return null;
+    if (!audioCtx) {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      } catch (e) { audioCtx = null; return null; }
+    }
+    if (audioCtx.state === "suspended") { try { audioCtx.resume(); } catch (e) {} }
+    return audioCtx;
+  }
+  // One oscillator note with a short exponential gain envelope.
+  function tone(freq, startMs, durMs, type, peak) {
+    const ac = audioCtx;
+    if (!ac) return;
+    const t0 = ac.currentTime + startMs / 1000;
+    const dur = durMs / 1000;
+    try {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  }
+  const soundCorrect = () => { if (ensureAudio()) { tone(880, 0, 60, "sine", 0.08); tone(1318, 70, 70, "sine", 0.08); } };
+  const soundWrong = () => { if (ensureAudio()) { tone(165, 0, 150, "triangle", 0.08); } };
+  // Rising C-E-G arpeggio for a perfect run / survival best.
+  const soundFanfare = () => { if (ensureAudio()) { tone(523, 0, 130, "sine", 0.09); tone(659, 120, 130, "sine", 0.09); tone(784, 240, 260, "sine", 0.09); } };
+
+  /* ============================================================
+     Confetti — a disposable full-screen <canvas>, celebration only.
+     Created on demand and removed when the burst ends; never resident.
+     ============================================================ */
+  let fxCanvas = null, fxCtx = null, fxRAF = 0, fxParticles = null, fxResize = null;
+
+  function stopConfetti() {
+    if (fxRAF) { cancelAnimationFrame(fxRAF); fxRAF = 0; }
+    if (fxResize) { window.removeEventListener("resize", fxResize); fxResize = null; }
+    if (fxCanvas && fxCanvas.parentNode) fxCanvas.parentNode.removeChild(fxCanvas);
+    fxCanvas = null; fxCtx = null; fxParticles = null;
+  }
+
+  function startConfetti() {
+    if (REDUCED) return;
+    stopConfetti();                              // never overlap two bursts
+    fxCanvas = document.createElement("canvas");
+    fxCanvas.id = "fx";
+    // Above the result overlay (z-index 30); clicks fall through to the buttons.
+    fxCanvas.style.cssText = "pointer-events:none;position:fixed;inset:0;z-index:60;";
+    ($("app") || document.body).appendChild(fxCanvas);
+    fxCtx = fxCanvas.getContext("2d");
+
+    const sizeFx = () => {
+      fxCanvas.width = Math.round(window.innerWidth * dpr);
+      fxCanvas.height = Math.round(window.innerHeight * dpr);
+    };
+    sizeFx();
+    fxResize = () => sizeFx();                    // fixed canvas: rebuild backing store on resize
+    window.addEventListener("resize", fxResize);
+
+    const W = window.innerWidth, H = window.innerHeight;
+    const colors = [COLORS.target, COLORS.correct, COLORS.mMid, COLORS.primary];
+    fxParticles = [];
+    for (let i = 0; i < 72; i++) {
+      fxParticles.push({
+        x: Math.random() * W,
+        y: -20 - Math.random() * H * 0.35,       // start above the viewport
+        vx: (Math.random() - 0.5) * 0.18,        // px/ms
+        vy: 0.18 + Math.random() * 0.24,
+        size: 6 + Math.random() * 6,
+        color: colors[(Math.random() * colors.length) | 0] || "#f2a413",
+        rot: Math.random() * Math.PI,
+        vrot: (Math.random() - 0.5) * 0.012,
+      });
+    }
+
+    const start = performance.now();
+    let last = start;
+    const step = (now) => {
+      const dt = Math.min(now - last, 50); last = now;
+      const w = window.innerWidth, h = window.innerHeight;
+      fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      fxCtx.clearRect(0, 0, w, h);
+      let alive = 0;
+      for (let i = 0; i < fxParticles.length; i++) {
+        const p = fxParticles[i];
+        p.vy += 0.0004 * dt;                      // gentle gravity
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vrot * dt;
+        if (p.y < h + 20) alive++;
+        fxCtx.save();
+        fxCtx.translate(p.x, p.y);
+        fxCtx.rotate(p.rot);
+        fxCtx.fillStyle = p.color;
+        fxCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        fxCtx.restore();
+      }
+      // Stop once every piece has left the bottom (hard cap as a safety net).
+      if (alive > 0 && now - start < 4000) fxRAF = requestAnimationFrame(step);
+      else stopConfetti();
+    };
+    fxRAF = requestAnimationFrame(step);
+  }
 
   /* ============================================================
      Boot
      ============================================================ */
   function init() {
     readColors();
+    state.stats = store.get(STATS_KEY, {});
+    // Guard against a corrupted / hand-edited store (array, string, null…): stats must be a plain object.
+    if (!state.stats || typeof state.stats !== "object" || Array.isArray(state.stats)) state.stats = {};
     wireSetup();
+    applySavedSettings(store.get(SETTINGS_KEY, null));
+    updateRank();
     registerSW();
     updateOnlineBadge();
     window.addEventListener("online", updateOnlineBadge);
@@ -156,6 +317,10 @@
       state.byId.set(pad3(f.id), f);
       state.features.push(f);
     });
+    // Distractor source: every renderable country, independent of the current region filter.
+    state.allCountries = state.features.map(
+      (f) => ({ id: pad3(f.id), ja: nameOf(f), region: regionOf(f), feature: f })
+    );
   }
 
   /* ============================================================
@@ -169,9 +334,23 @@
 
     zoom = d3.zoom()
       .scaleExtent([1, 14])
-      .on("start", () => { state.panning = true; })
-      .on("zoom", (ev) => { state.transform = ev.transform; render(); })
-      .on("end", () => { state.panning = false; render(); });
+      .on("start", (ev) => {
+        if (ev.sourceEvent) {
+          fling.interrupted = false;
+          stopFling(true);
+          fling.t = 0;             // force trackFling to start sampling fresh
+        }
+        state.panning = true;
+      })
+      .on("zoom", (ev) => {
+        state.transform = ev.transform;
+        if (ev.sourceEvent) trackFling(ev.transform);
+        render();
+      })
+      .on("end", (ev) => {
+        state.panning = false;
+        if (ev.sourceEvent) startFling(); else render();
+      });
     canvasSel.call(zoom);
     state.transform = d3.zoomIdentity;
 
@@ -210,10 +389,66 @@
     const g = (k, fb) => (s.getPropertyValue(k).trim() || fb);
     COLORS.land = g("--land", "#aec2cc");
     COLORS.landStroke = g("--land-stroke", "#5e7b87");
+    COLORS.primary = g("--primary", "#0e7c86");   // confetti color source
     COLORS.target = g("--target", "#f2a413");
     COLORS.targetLite = "#ffca5c";   // pulse peak (from the old CSS keyframe)
     COLORS.correct = g("--correct", "#1c9e5b");
     COLORS.wrong = g("--wrong", "#d64444");
+    COLORS.mGood = g("--m-good", "#4caf7d");   // mastery map buckets
+    COLORS.mMid = g("--m-mid", "#e8c04a");
+    COLORS.mWeak = g("--m-weak", "#e07a6a");
+  }
+
+  // Bucket a country by its recorded performance → a fill color, or null for "not seen yet".
+  function masteryColor(id) {
+    const s = state.stats[id];
+    const seen = s ? s.c + s.w : 0;
+    if (!seen) return null;                          // no record → default land color
+    const rate = s.c / seen;
+    if (rate >= 0.8 && seen >= 2) return COLORS.mGood;  // 習得: solid & practiced
+    if (rate >= 0.5) return COLORS.mMid;                // 学習中
+    return COLORS.mWeak;                                // 苦手
+  }
+
+  // 習得数 = masteryColor が good バケット（正答率≥0.8 かつ seen≥2）に入る国の数。
+  function masteredCount() {
+    let n = 0;
+    for (const id in state.stats) { if (masteryColor(id) === COLORS.mGood) n++; }
+    return n;
+  }
+
+  // 習得数に応じた七段階の称号（しきい値は習得国数）。
+  const RANK_TIERS = [
+    { min: 170, name: "世界マスター" },
+    { min: 140, name: "世界の達人" },
+    { min: 100, name: "地理博士" },
+    { min: 60, name: "冒険家" },
+    { min: 30, name: "旅人" },
+    { min: 10, name: "まちある記" },
+    { min: 0, name: "ちず見習い" },
+  ];
+  const rankFor = (n) => RANK_TIERS.find((t) => n >= t.min);
+
+  // setup カードの称号行を現在の習得数から更新する。習得0のときは誘い文言。
+  function updateRank() {
+    if (!els.setupRank) return;
+    const n = masteredCount();
+    const total = Object.keys(window.COUNTRY_DATA || {}).length;
+    els.setupRank.textContent = n
+      ? "称号「" + rankFor(n).name + "」 — 習得 " + n + " / " + total + " か国"
+      : "クイズに正解して称号を集めよう";
+    els.setupRank.hidden = false;
+  }
+
+  // Build the id -> color map for 成績マップ from the current stats (non-mastered stay unset).
+  function buildPaint() {
+    const m = new Map();
+    for (let i = 0; i < state.features.length; i++) {
+      const id = pad3(state.features[i].id);
+      const col = masteryColor(id);
+      if (col) m.set(id, col);
+    }
+    return m;
   }
 
   const hexRGB = (h) => {
@@ -252,16 +487,36 @@
     // constant on-screen stroke like SVG's non-scaling-stroke; skip while moving
     const strokeW = state.panning ? 0 : 0.7 / t.k;
 
-    // 1) all unmarked land in a single batched path — one fill, one stroke
-    ctx.beginPath();
-    for (let i = 0; i < state.features.length; i++) {
-      const f = state.features[i];
-      if (state.marks.has(pad3(f.id))) continue;
-      geoPath(f);
+    // 1) all unmarked land. Normally one batched path (one fill, one stroke). In
+    //    成績マップ mode state.paint groups countries by color, so batch per color.
+    if (!state.paint) {
+      ctx.beginPath();
+      for (let i = 0; i < state.features.length; i++) {
+        const f = state.features[i];
+        if (state.marks.has(pad3(f.id))) continue;
+        geoPath(f);
+      }
+      ctx.fillStyle = COLORS.land;
+      ctx.fill();
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(); }
+    } else {
+      const groups = new Map();   // color -> features sharing it
+      for (let i = 0; i < state.features.length; i++) {
+        const f = state.features[i];
+        if (state.marks.has(pad3(f.id))) continue;
+        const col = state.paint.get(pad3(f.id)) || COLORS.land;
+        let arr = groups.get(col);
+        if (!arr) { arr = []; groups.set(col, arr); }
+        arr.push(f);
+      }
+      for (const [col, arr] of groups) {
+        ctx.beginPath();
+        for (let i = 0; i < arr.length; i++) geoPath(arr[i]);
+        ctx.fillStyle = col;
+        ctx.fill();
+        if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(); }
+      }
     }
-    ctx.fillStyle = COLORS.land;
-    ctx.fill();
-    if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(); }
 
     // 2) marked countries (usually 0-2) drawn individually on top
     if (state.marks.size) {
@@ -325,6 +580,58 @@
     if (pulseRAF) { cancelAnimationFrame(pulseRAF); pulseRAF = 0; }
   }
 
+  /* ------------------------------------------------------------
+     Fling inertia: d3.zoom stops dead when the finger lifts, so we
+     sample the drag velocity ourselves and, on release, keep
+     translating with exponential decay like native scrolling.
+     Programmatic zoom events have no sourceEvent and are ignored,
+     so the fling's own translateBy calls don't feed back into it.
+     ------------------------------------------------------------ */
+  const fling = { vx: 0, vy: 0, x: 0, y: 0, k: 1, t: 0, raf: 0, interrupted: false };
+
+  function stopFling(byPointer) {
+    if (fling.raf) {
+      cancelAnimationFrame(fling.raf);
+      fling.raf = 0;
+      // a tap that stops the glide is not an answer
+      if (byPointer) fling.interrupted = true;
+    }
+    fling.vx = fling.vy = 0;
+  }
+
+  function trackFling(t) {
+    const now = performance.now();
+    const dt = now - fling.t;
+    if (t.k !== fling.k || dt > 120) {
+      // pinch/wheel (scale changed) or a fresh gesture — no carry-over
+      fling.vx = fling.vy = 0;
+    } else if (dt > 0) {
+      // low-pass blend so one jittery frame doesn't set the speed
+      const w = 0.7;
+      fling.vx = fling.vx * (1 - w) + ((t.x - fling.x) / dt) * w;
+      fling.vy = fling.vy * (1 - w) + ((t.y - fling.y) / dt) * w;
+    }
+    fling.x = t.x; fling.y = t.y; fling.k = t.k; fling.t = now;
+  }
+
+  function startFling() {
+    const paused = performance.now() - fling.t > 100;  // finger stopped before lifting
+    const speed = Math.hypot(fling.vx, fling.vy);
+    if (paused || speed < 0.08) { fling.vx = fling.vy = 0; render(); return; }
+    const DECAY = 0.004;   // 1/ms — glide settles in roughly a second
+    let last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(now - last, 50); last = now;
+      const k = (state.transform || d3.zoomIdentity).k;
+      // translateBy is in pre-scale units; divide by k to move in screen px
+      canvasSel.call(zoom.translateBy, fling.vx * dt / k, fling.vy * dt / k);
+      const decay = Math.exp(-DECAY * dt);
+      fling.vx *= decay; fling.vy *= decay;
+      fling.raf = Math.hypot(fling.vx, fling.vy) > 0.02 ? requestAnimationFrame(step) : 0;
+    };
+    fling.raf = requestAnimationFrame(step);
+  }
+
   function fitToFeatures(features, animate) {
     state.fittedFeatures = features;
     state.viewMode = "fit";
@@ -336,6 +643,7 @@
   }
 
   function resetZoom(animate) {
+    stopFling();
     const sel = animate ? canvasSel.transition().duration(400) : canvasSel;
     sel.call(zoom.transform, d3.zoomIdentity);
   }
@@ -347,6 +655,7 @@
     applyFocus(f, animate !== false);
   }
   function applyFocus(f, animate) {
+    stopFling();
     const b = geoPath.bounds(f);
     const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
     const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
@@ -395,6 +704,7 @@
     chipGroup("region-chips", (v) => (state.settings.region = v));
     segGroup("count-seg", "count", (v) => (state.settings.count = parseInt(v, 10)));
     segGroup("explain-seg", "explain", (v) => (state.settings.explain = v === "1"));
+    segGroup("sound-seg", "sound", (v) => (state.settings.sound = v === "1"));
 
     els.start.onclick = () => {
       if (!state.features.length) {
@@ -402,7 +712,9 @@
         else { alert("地図データがまだありません。最初の1回だけ、ネットに接続して開いてください。"); }
         return;
       }
+      store.set(SETTINGS_KEY, state.settings);
       if (state.settings.mode === "browse") startBrowse();
+      else if (state.settings.mode === "progress") startProgress();
       else startQuiz();
     };
     els.retry.onclick = loadWorld;
@@ -411,17 +723,57 @@
       if (confirm("クイズをやめて設定に戻りますか？")) showSetup();
     };
     els.resultHome.onclick = showSetup;
-    els.resultAgain.onclick = startQuiz;
+    // Wrap so the click MouseEvent is never passed in as reviewIds.
+    els.resultAgain.onclick = () => startQuiz();
+    els.resultRetryMissed.onclick = () => startQuiz([...new Set(state.mistakes)]);
     els.explainNext.onclick = onExplainNext;
+  }
+
+  // Restore a previously saved setup, validating every field before applying it.
+  function applySavedSettings(s) {
+    if (!s || typeof s !== "object") return;
+    const modes = ["find", "name", "browse", "progress"];
+    if (modes.indexOf(s.mode) !== -1) {
+      state.settings.mode = s.mode;
+      activateSeg("mode-seg", "mode", s.mode);
+    }
+    if (typeof s.region === "string" &&
+        document.querySelector('#region-chips [data-region="' + s.region + '"]')) {
+      state.settings.region = s.region;
+      activateChip("region-chips", s.region);
+    }
+    if ([10, 20, 0, -1].indexOf(s.count) !== -1) {
+      state.settings.count = s.count;
+      activateSeg("count-seg", "count", String(s.count));
+    }
+    if (typeof s.explain === "boolean") {
+      state.settings.explain = s.explain;
+      activateSeg("explain-seg", "explain", s.explain ? "1" : "0");
+    }
+    if (typeof s.sound === "boolean") {
+      state.settings.sound = s.sound;
+      activateSeg("sound-seg", "sound", s.sound ? "1" : "0");
+    }
+    onModeChange(state.settings.mode);
+  }
+
+  function activateSeg(id, attr, val) {
+    $(id).querySelectorAll(".seg-btn")
+      .forEach((b) => b.classList.toggle("active", b.dataset[attr] === val));
+  }
+  function activateChip(id, region) {
+    $(id).querySelectorAll(".chip")
+      .forEach((b) => b.classList.toggle("active", b.dataset.region === region));
   }
 
   // Toggle quiz-only settings and the start button label for the study mode.
   function onModeChange(v) {
     state.settings.mode = v;
-    const browse = v === "browse";
-    if (els.countField) els.countField.hidden = browse;
-    if (els.explainField) els.explainField.hidden = browse;
-    els.start.textContent = browse ? "地図を見る" : "スタート";
+    const noQuiz = v === "browse" || v === "progress";   // non-quiz views hide count/explain
+    if (els.countField) els.countField.hidden = noQuiz;
+    if (els.explainField) els.explainField.hidden = noQuiz;
+    if (els.soundField) els.soundField.hidden = noQuiz;
+    els.start.textContent = v === "browse" ? "地図を見る" : v === "progress" ? "成績を見る" : "スタート";
   }
 
   function segGroup(id, attr, cb) {
@@ -446,18 +798,26 @@
   }
 
   function showSetup() {
+    clearTimeout(advanceTimer);            // cancel any queued next-question/result
+    stopConfetti();
     state.browsing = false;
+    state.progressView = false;
+    state.paint = null;                    // never let mastery colors bleed into other modes
     state.labels = false;
     els.stats.classList.remove("browse");
     els.setup.hidden = false;
     els.result.hidden = true;
     els.stats.hidden = true;
+    els.livesStat.hidden = true;
     els.progTrack.hidden = true;
     els.promptBar.hidden = true;
     els.choices.hidden = true;
     els.zoomControls.hidden = true;
+    els.masteryLegend.hidden = true;
+    els.explainStats.hidden = true;
     els.explainPanel.hidden = true;
     onModeChange(state.settings.mode);
+    updateRank();
     clearMapStates();
     if (state.features.length) fitToFeatures(state.features, true);
     updateOnlineBadge();
@@ -473,21 +833,54 @@
       .map((f) => ({ id: pad3(f.id), ja: nameOf(f), region: regionOf(f), feature: f }));
   }
 
-  function startQuiz() {
-    buildPool();
-    if (state.pool.length < 4) { alert("この地域は問題数が少なすぎます。"); return; }
+  // 苦手・久しぶりの国ほど出やすくする重み（重み付き非復元抽出で使用）。
+  function weightFor(id, now) {
+    const s = state.stats[id];
+    const seen = s ? s.c + s.w : 0;
+    if (!seen) return 1.7;                            // 未出題をやや優先
+    const wrongRate = s.w / seen;
+    const days = (now - (s.last || 0)) / 86400000;    // 前回出題からの経過日数
+    // 誤答率が高いほど（最大 +2.5）、久しぶりの国ほど（30日で頭打ち +0.5）重くする。
+    return 1 + 2.5 * wrongRate + Math.min(days / 30, 1) * 0.5;
+  }
 
-    const ids = shuffle(state.pool.map((c) => c.id));
-    const n = state.settings.count > 0 ? Math.min(state.settings.count, ids.length) : ids.length;
-    state.queue = ids.slice(0, n);
+  // reviewIds を渡すと「まちがえた国だけ復習」（count 無視）。無ければ苦手優先の通常出題。
+  function startQuiz(reviewIds) {
+    stopConfetti();                        // clear any celebration still falling from a prior result
+    buildPool();
+    // Distractors now come from state.allCountries, so any non-empty pool is quizzable.
+    if (state.pool.length < 1) { alert("この地域には収録国がありません。"); return; }
+
+    // サバイバルは「問題数=-1 かつ 復習でない」ときだけ。復習クイズは常に通常ルール。
+    const survival = !(reviewIds && reviewIds.length) && state.settings.count === -1;
+
+    let queue;
+    if (reviewIds && reviewIds.length) {
+      queue = shuffle([...new Set(reviewIds)]);
+    } else {
+      // Efraimidis–Spirakis A-Res: key = rand^(1/weight) を降順に取り、上位 n 件を選ぶ。
+      const now = Date.now();
+      const keyed = state.pool.map((c) => ({ id: c.id, key: Math.pow(Math.random(), 1 / weightFor(c.id, now)) }));
+      keyed.sort((a, b) => b.key - a.key);
+      const n = state.settings.count > 0 ? Math.min(state.settings.count, keyed.length) : keyed.length;
+      queue = shuffle(keyed.slice(0, n).map((x) => x.id));   // 出題順はランダム化
+    }
+    state.queue = queue;
     state.idx = 0; state.score = 0; state.streak = 0; state.answered = 0;
-    state.mistakes = []; state.locked = false;
+    state.mistakes = []; state.reasks = {}; state.locked = false;
+    state.survival = survival; state.lives = 3; state.survivalOver = false;
+    state.browsing = false;
+    state.progressView = false;
+    state.paint = null;                    // clear any mastery coloring from a prior view
 
     els.setup.hidden = true;
     els.result.hidden = true;
     els.stats.hidden = false;
-    els.progTrack.hidden = false;
+    els.progTrack.hidden = survival;       // サバイバルは長さが不定なのでバーを出さない
+    els.livesStat.hidden = !survival;      // ライフ表示はサバイバルのみ
+    if (survival) updateLives();
     els.zoomControls.hidden = false;
+    els.masteryLegend.hidden = true;
 
     // zoom into region for focused study; whole world when "all"
     const poolFeatures = state.pool.map((c) => c.feature);
@@ -502,12 +895,34 @@
     return state.pool.find((c) => c.id === id);
   }
 
+  // サバイバル用のキュー補充: 直近3問を除いた pool から A-Res 重み付きで10問追加。
+  // pool が3以下の小地域では除外すると候補が枯れるので除外しない。
+  function extendQueue() {
+    const now = Date.now();
+    const recent = new Set(state.queue.slice(Math.max(0, state.idx - 2), state.idx + 1));
+    let cands = state.pool;
+    if (state.pool.length > 3) cands = state.pool.filter((c) => !recent.has(c.id));
+    const keyed = cands.map((c) => ({ id: c.id, key: Math.pow(Math.random(), 1 / weightFor(c.id, now)) }));
+    keyed.sort((a, b) => b.key - a.key);
+    const take = Math.min(10, keyed.length);
+    for (let i = 0; i < take; i++) state.queue.push(keyed[i].id);
+  }
+
   function nextQuestion() {
+    // サバイバルは無限出題: 残り2問未満になったらキューを補充し、endQuiz の
+    // 到達条件（idx >= queue.length）を踏まないようにする。
+    if (state.survival && state.queue.length - state.idx < 2) extendQueue();
     if (state.idx >= state.queue.length) { endQuiz(); return; }
     state.locked = false;
     els.explainPanel.hidden = true;
     clearMapStates();
     updateProgress();
+    // A previous wrong answer / explanation panel may have left the map zoomed onto
+    // one country. Re-fit before the next FIND question so the player isn't hunting
+    // from a stale close-up. NAME mode re-frames itself via focusFeature, so skip it there.
+    if (state.settings.mode === "find" && state.viewMode === "focus") {
+      fitToFeatures(state.fittedFeatures || state.features, true);
+    }
     const c = currentCountry();
     if (state.settings.mode === "find") askFind(c);
     else askName(c);
@@ -544,6 +959,7 @@
   }
 
   function onCanvasClick(ev) {
+    if (fling.interrupted) { fling.interrupted = false; return; }
     if (syncSizeNow()) { reapplyView(); render(); }   // backstop: never test a stale map
     const [mx, my] = d3.pointer(ev, canvas);
     const f = featureAt(mx, my);
@@ -560,9 +976,42 @@
     if (!correct) setMark(pad3(f.id), "wrong");
     render();
 
-    if (correct) { scoreCorrect(); toast("正解！", "ok"); }
-    else { scoreWrong(c.ja); toast("正解は " + c.ja, "ng"); }
-    finishTurn(c, correct, correct ? 900 : 1500);
+    if (correct) {
+      scoreCorrect();
+      toast(correctMsg(), "ok");
+    } else {
+      scoreWrong(c.id);
+      toast("正解は " + c.ja, "ng");
+      // Burn the location in: zoom to where it actually was. When explain is on,
+      // showExplain already focuses this feature, so only do it ourselves when it's off.
+      if (!state.settings.explain) focusFeature(c.feature);
+    }
+    finishTurn(c, correct, correct ? 900 : 2200);
+  }
+
+  // Pick n plausible wrong answers, preferring geographically close countries so the
+  // choices actually test knowledge. Rings: same subregion → same continent → anywhere.
+  // Source is state.allCountries (not the region-filtered pool) so region-limited and
+  // review quizzes still get a full, varied set of distractors.
+  function pickDistractors(c, n = 3) {
+    const sub = SUBREGION_OF.get(c.id);
+    const rest = state.allCountries.filter((x) => x.id !== c.id);
+    const rings = [
+      sub ? rest.filter((x) => SUBREGION_OF.get(x.id) === sub) : [],
+      rest.filter((x) => x.region === c.region),
+      rest,
+    ];
+    const out = [];
+    const used = new Set();
+    for (let r = 0; r < rings.length && out.length < n; r++) {
+      const ring = shuffle(rings[r].slice());
+      for (let i = 0; i < ring.length && out.length < n; i++) {
+        if (used.has(ring[i].id)) continue;
+        used.add(ring[i].id);
+        out.push(ring[i]);
+      }
+    }
+    return out;
   }
 
   // ---- NAME mode: highlight a country, pick its name ----
@@ -575,8 +1024,8 @@
     startPulse();
     focusFeature(c.feature);
 
-    // build 4 choices: correct + 3 distractors from the same pool
-    const others = shuffle(state.pool.filter((x) => x.id !== c.id)).slice(0, 3);
+    // build 4 choices: correct + 3 distractors drawn from the nearest countries first
+    const others = pickDistractors(c, 3);
     const opts = shuffle([c, ...others]);
 
     els.choicesGrid.innerHTML = "";
@@ -603,11 +1052,11 @@
     if (correct) {
       setMark(c.id, "correct");
       scoreCorrect();
-      toast("正解！", "ok");
+      toast(correctMsg(), "ok");
     } else {
       btn.classList.add("wrong");
       setMark(c.id, "wrong");
-      scoreWrong(c.ja);
+      scoreWrong(c.id);
       toast("正解は " + c.ja, "ng");
     }
     render();
@@ -617,11 +1066,41 @@
   /* ============================================================
      Scoring & flow
      ============================================================ */
-  function scoreCorrect() { state.score++; state.streak++; state.answered++; updateStats(); }
-  function scoreWrong(ja) { state.streak = 0; state.answered++; state.mistakes.push(ja); updateStats(); }
+  function scoreCorrect() { state.score++; state.streak++; state.answered++; buzz(15); soundCorrect(); updateStats(); }
+  // Celebrate every 5th consecutive correct answer (call AFTER scoreCorrect bumps the streak).
+  function correctMsg() {
+    return state.streak >= 5 && state.streak % 5 === 0 ? "🔥 " + state.streak + "連続正解！" : "正解！";
+  }
+  function scoreWrong(id) { state.streak = 0; state.answered++; state.mistakes.push(id); buzz(60); soundWrong(); updateStats(); }
+
+  // Persist a per-country tally. Called only from finishTurn to avoid double counting.
+  function recordAnswer(id, correct) {
+    let s = state.stats[id];
+    if (!s) { s = { c: 0, w: 0, last: 0 }; state.stats[id] = s; }
+    if (correct) s.c++; else s.w++;
+    s.last = Date.now();
+    store.set(STATS_KEY, state.stats);
+  }
+
+  // Session-only re-ask: slip a missed country back a few questions ahead (max 2×/id).
+  function reaskLater(id) {
+    if ((state.reasks[id] || 0) >= 2) return;
+    if (state.queue.includes(id, state.idx + 1)) return;   // already scheduled ahead
+    const at = Math.min(state.idx + 3 + ((Math.random() * 3) | 0), state.queue.length);
+    state.queue.splice(at, 0, id);
+    state.reasks[id] = (state.reasks[id] || 0) + 1;
+  }
 
   // After an answer: either show the explanation panel (解説モード) or auto-advance.
   function finishTurn(c, correct, ms) {
+    recordAnswer(c.id, correct);
+    if (state.survival) {
+      // ライフの減算はここ一箇所だけ（二重減算防止）。無限出題なので再挿入はしない。
+      if (!correct) { state.lives--; updateLives(); }
+      if (state.lives <= 0) state.survivalOver = true;
+    } else if (!correct) {
+      reaskLater(c.id);
+    }
     if (state.settings.explain) {
       showExplain(c, correct);
     } else {
@@ -629,17 +1108,25 @@
     }
   }
 
+  // 残りライフを ♥、失った分を ♡ で表示（例: 2機 → "♥♥♡"）。
+  function updateLives() {
+    const left = Math.max(0, state.lives);
+    els.lives.textContent = "♥".repeat(left) + "♡".repeat(Math.max(0, 3 - left));
+  }
+
   function showExplain(c, correct) {
     const info = infoFor(c.id);
     els.explainBadge.hidden = false;
     els.explainBadge.textContent = correct ? "正解" : "不正解";
     els.explainBadge.className = "explain-badge " + (correct ? "ok" : "ng");
-    els.explainName.textContent = c.ja;
+    els.explainName.textContent = withFlag(c.id, c.ja);
     els.explainRegion.textContent = REGION_LABEL[c.region] || "";
     els.explainCap.textContent = info && info.cap ? "首都: " + info.cap : "";
     els.explainCap.hidden = !(info && info.cap);
     els.explainNote.textContent = info && info.note ? info.note : "この国の解説データはまだありません。";
-    els.explainNext.textContent = "次へ →";
+    els.explainStats.hidden = true;        // quiz explanation never shows the mastery tally
+    // ライフ切れ（この解説を見た後で結果へ）のときはボタン文言を変える。
+    els.explainNext.textContent = state.survivalOver ? "結果へ →" : "次へ →";
     els.promptBar.hidden = true;
     els.choices.hidden = true;
     els.explainPanel.hidden = false;
@@ -651,12 +1138,20 @@
   function onExplainNext() {
     els.explainPanel.hidden = true;
     if (state.browsing) { clearMapStates(); return; }   // keep browsing & labels
+    if (state.survivalOver) { endQuiz(); return; }       // ライフ切れ: フィードバックを見た後で終了
     state.idx++;
     nextQuestion();
   }
 
+  // Hold the timer id so quitting to setup (showSetup) can cancel a pending advance —
+  // otherwise a queued next-question / result could pop up over the setup screen.
+  let advanceTimer;
   function advanceAfter(ms) {
-    setTimeout(() => { state.idx++; nextQuestion(); }, ms);
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(() => {
+      if (state.survivalOver) { endQuiz(); return; }     // ライフ切れ: 遅延後に終了
+      state.idx++; nextQuestion();
+    }, ms);
   }
 
   /* ============================================================
@@ -666,16 +1161,20 @@
     buildPool();
     if (!state.pool.length) { alert("この地域には収録国がありません。"); return; }
     state.browsing = true;
+    state.progressView = false;
+    state.paint = null;                    // plain browse: no mastery coloring
     state.locked = false;
 
     els.setup.hidden = true;
     els.result.hidden = true;
     els.stats.hidden = false;
     els.stats.classList.add("browse");     // keep only the ✕ in the top bar
+    els.livesStat.hidden = true;
     els.progTrack.hidden = true;
     els.promptBar.hidden = true;
     els.choices.hidden = true;
     els.zoomControls.hidden = false;
+    els.masteryLegend.hidden = true;
     els.explainPanel.hidden = true;
 
     clearMapStates();
@@ -689,6 +1188,40 @@
     toast("国をタップすると首都・豆知識が見られます", "");
   }
 
+  /* ============================================================
+     Mastery map (成績マップ) — browse variant tinted by past results
+     ============================================================ */
+  function startProgress() {
+    buildPool();
+    if (!state.pool.length) { alert("この地域には収録国がありません。"); return; }
+    state.browsing = true;                 // reuse browse tap→detail + ✕→setup behavior
+    state.progressView = true;
+    state.locked = false;
+    state.paint = buildPaint();            // tint land by mastery bucket
+
+    els.setup.hidden = true;
+    els.result.hidden = true;
+    els.stats.hidden = false;
+    els.stats.classList.add("browse");     // keep only the ✕ in the top bar
+    els.livesStat.hidden = true;
+    els.progTrack.hidden = true;
+    els.promptBar.hidden = true;
+    els.choices.hidden = true;
+    els.zoomControls.hidden = false;
+    els.masteryLegend.hidden = false;
+    els.explainPanel.hidden = true;
+
+    clearMapStates();                      // clears marks, then render() paints via state.paint
+    const feats = state.settings.region === "all"
+      ? state.features
+      : state.pool.map((c) => c.feature);
+    state.labels = true;
+    fitToFeatures(feats, true);
+    buildLabels(feats);
+    render();
+    toast("緑=習得 黄=学習中 赤=苦手。タップで成績が見られます", "");
+  }
+
   function showBrowseDetail(f) {
     const id = pad3(f.id);
     clearMapStates();
@@ -696,11 +1229,22 @@
     render();
     const info = infoFor(id);
     els.explainBadge.hidden = true;        // no 正解/不正解 badge when just browsing
-    els.explainName.textContent = nameOf(f);
+    els.explainName.textContent = withFlag(id, nameOf(f));
     els.explainRegion.textContent = REGION_LABEL[regionOf(f)] || "";
     els.explainCap.textContent = info && info.cap ? "首都: " + info.cap : "";
     els.explainCap.hidden = !(info && info.cap);
     els.explainNote.textContent = info && info.note ? info.note : "この国の解説データはまだありません。";
+    // In 成績マップ mode, show this country's tally; otherwise the row stays hidden.
+    if (state.progressView) {
+      const s = state.stats[id];
+      const seen = s ? s.c + s.w : 0;
+      els.explainStats.textContent = seen
+        ? "正解 " + s.c + "回 / まちがい " + s.w + "回（正答率 " + Math.round((s.c / seen) * 100) + "%）"
+        : "まだ出題されていません";
+      els.explainStats.hidden = false;
+    } else {
+      els.explainStats.hidden = true;
+    }
     els.explainNext.textContent = "閉じる";
     els.explainPanel.hidden = false;
     // Focus AFTER the panel is shown so the map is already at its final size.
@@ -713,6 +1257,7 @@
     els.streak.textContent = state.streak;
   }
   function updateProgress() {
+    if (state.survival) return;            // 長さ不定: ゼロ除算・見た目の混乱を避ける
     const pct = (state.idx / state.queue.length) * 100;
     els.progFill.style.width = pct + "%";
   }
@@ -729,27 +1274,59 @@
     els.choices.hidden = true;
     els.explainPanel.hidden = true;
     els.stats.hidden = true;
+    els.livesStat.hidden = true;
     clearMapStates();
 
-    const total = state.queue.length;
-    const pct = total ? Math.round((state.score / total) * 100) : 0;
-    els.resultNum.textContent = state.score;
-    els.resultDen.textContent = "/ " + total;
-    els.resultPct.textContent = "正答率 " + pct + "%";
+    let celebrate = false;                 // perfect run / survival best → fanfare + confetti
+
+    if (state.survival) {
+      // サバイバルはスコア（正解数）と自己ベストを見せる。
+      const key = state.settings.mode + ":" + state.settings.region;
+      const bests = store.get(BEST_KEY, {});
+      const safe = bests && typeof bests === "object" && !Array.isArray(bests) ? bests : {};
+      const hadRecord = Object.prototype.hasOwnProperty.call(safe, key);
+      const prev = hadRecord ? safe[key] : 0;
+      const isBest = state.score > prev;
+      if (isBest) { safe[key] = state.score; store.set(BEST_KEY, safe); }
+      els.resultEyebrow.textContent = "サバイバル終了！";
+      els.resultNum.textContent = state.score;
+      els.resultDen.textContent = "問";
+      els.resultPct.textContent = (isBest && hadRecord)
+        ? "🎉 自己ベスト更新！"
+        : "自己ベスト: " + Math.max(prev, state.score);
+      celebrate = isBest && hadRecord;     // 初回記録は控えめ、更新時だけお祝い
+    } else {
+      els.resultEyebrow.textContent = "おつかれさまでした";
+      const total = state.queue.length;
+      const pct = total ? Math.round((state.score / total) * 100) : 0;
+      els.resultNum.textContent = state.score;
+      els.resultDen.textContent = "/ " + total;
+      els.resultPct.textContent = "正答率 " + pct + "%";
+      celebrate = total > 0 && state.score === total;   // 全問正解
+    }
 
     if (state.mistakes.length) {
       els.resultReview.hidden = false;
       els.reviewList.innerHTML = "";
-      [...new Set(state.mistakes)].forEach((ja) => {
+      [...new Set(state.mistakes)].forEach((id) => {
+        const f = state.byId.get(id);
         const s = document.createElement("span");
         s.className = "review-item";
-        s.textContent = ja;
+        s.textContent = f ? withFlag(id, nameOf(f)) : id;
         els.reviewList.appendChild(s);
       });
+      // Missed some: make "復習" the primary action, demote "もう一度" to ghost.
+      els.resultRetryMissed.hidden = false;
+      els.resultRetryMissed.className = "btn primary";
+      els.resultAgain.className = "btn ghost";
     } else {
       els.resultReview.hidden = true;
+      els.resultRetryMissed.hidden = true;
+      els.resultAgain.className = "btn primary";
     }
     els.result.hidden = false;
+
+    if (celebrate) { soundFanfare(); startConfetti(); }
   }
 
   /* ============================================================
