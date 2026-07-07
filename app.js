@@ -99,7 +99,6 @@
     locked: false, fittedFeatures: null,
     marks: new Map(),   // padded id -> "target" | "correct" | "wrong" | "hi"
     transform: null,    // current d3 zoom transform
-    panning: false,     // true during an active drag/pinch
     browsing: false,    // "地図を見る" (study) mode active
     progressView: false, // "成績マップ" (mastery) mode active — a browse variant
     paint: null,        // null | Map(padded id -> fill color) for mastery-colored land
@@ -340,7 +339,6 @@
           stopFling(true);
           fling.t = 0;             // force trackFling to start sampling fresh
         }
-        state.panning = true;
       })
       .on("zoom", (ev) => {
         state.transform = ev.transform;
@@ -348,8 +346,7 @@
         render();
       })
       .on("end", (ev) => {
-        state.panning = false;
-        if (ev.sourceEvent) startFling(); else render();
+        if (ev.sourceEvent) startFling();
       });
     canvasSel.call(zoom);
     state.transform = d3.zoomIdentity;
@@ -484,8 +481,10 @@
     ctx.scale(t.k, t.k);
     ctx.lineJoin = "round";
 
-    // constant on-screen stroke like SVG's non-scaling-stroke; skip while moving
-    const strokeW = state.panning ? 0 : 0.7 / t.k;
+    // constant on-screen stroke like SVG's non-scaling-stroke. Drawn during pans
+    // and pinches too: borders vanishing mid-gesture reads as a glitch, and the
+    // whole world strokes as one batched path so the extra pass stays cheap.
+    const strokeW = 0.7 / t.k;
 
     // 1) all unmarked land. Normally one batched path (one fill, one stroke). In
     //    成績マップ mode state.paint groups countries by color, so batch per color.
