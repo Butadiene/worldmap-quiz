@@ -24,7 +24,7 @@ Everything is driven by `app.js`, one IIFE holding a single `state` object. Ther
 
 **Data joins on ISO 3166-1 numeric country codes**, zero-padded to 3 digits (`pad3`). This is the linchpin connecting three sources:
 
-- `countries-110m.json` (world-atlas, CDN) → GeoJSON features whose `f.id` is the numeric code. These are the map polygons.
+- `countries-50m.json` (world-atlas, CDN) → GeoJSON features whose `f.id` is the numeric code. These are the map polygons. (The higher-detail 50m data is used so small island nations have polygons; drop to `countries-110m.json` for lighter borders.)
 - `countries.js` → `window.COUNTRY_DATA[code]` = `{ ja, region }`. **Only countries present here are rendered and quizzed** — `buildFeatures` filters out any feature lacking a `COUNTRY_DATA` entry. So adding a country to the quiz = adding its padded numeric code to `countries.js`.
 - `explanations.js` → `window.COUNTRY_INFO[code]` = `{ cap, note }`, used only by the explanation panel (解説モード) after each answer. Optional; missing entries degrade gracefully.
 
@@ -51,4 +51,4 @@ Both converge on `finishTurn`, which either shows the explanation panel (when ex
 
 - `countries.js` and `explanations.js` are marked "auto-generated" from `gen_countries.py` / `gen_icons.py`, but those generator scripts are **not in the repo** — edit the `.js` data files directly.
 - Deploy target is GitHub Pages with `index.html` at repo root (see README).
-- To increase border detail, swap `countries-110m.json` for `countries-50m.json` in both `app.js` (`WORLD_URL`) and `sw.js`.
+- The map uses `countries-50m.json`. To trade detail for a smaller download, swap it for `countries-110m.json` in both `app.js` (`WORLD_URL`) and `sw.js` (note: 110m omits polygons for several small island nations, which would then not render).

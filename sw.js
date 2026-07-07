@@ -1,6 +1,6 @@
 /* Service worker — offline caching for 世界地図クイズ
    Bump CACHE version to force an update after changing files. */
-const CACHE = "worldquiz-v8";
+const CACHE = "worldquiz-v9";
 
 const LOCAL_ASSETS = [
   "./",
@@ -17,7 +17,7 @@ const LOCAL_ASSETS = [
 const CDN_ASSETS = [
   "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js",
   "https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js",
-  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json",
 ];
 
 self.addEventListener("install", (event) => {

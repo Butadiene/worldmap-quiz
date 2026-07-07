@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+  const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
   const REGION_LABEL = {
     all: "世界全体", asia: "アジア", europe: "ヨーロッパ", africa: "アフリカ",
@@ -15,24 +15,24 @@
   // Finer sub-regions, keyed by ISO 3166-1 numeric so countries.js stays untouched.
   const SUBREGIONS = {
     east_asia:       { label: "東アジア",       ids: ["156","158","392","408","410","496"] },
-    southeast_asia:  { label: "東南アジア",     ids: ["096","104","116","360","418","458","608","626","704","764"] },
-    south_asia:      { label: "南アジア",       ids: ["004","050","064","144","356","524","586"] },
+    southeast_asia:  { label: "東南アジア",     ids: ["096","104","116","360","418","458","608","626","702","704","764"] },
+    south_asia:      { label: "南アジア",       ids: ["004","050","064","144","356","462","524","586"] },
     central_asia:    { label: "中央アジア",     ids: ["398","417","762","795","860"] },
-    west_asia:       { label: "西アジア（中東）", ids: ["031","051","196","268","364","368","376","400","414","422","512","634","682","760","784","792","887"] },
+    west_asia:       { label: "西アジア（中東）", ids: ["031","048","051","196","268","275","364","368","376","400","414","422","512","634","682","760","784","792","887"] },
 
     north_europe:    { label: "北ヨーロッパ",   ids: ["208","233","246","352","372","428","440","578","752","826"] },
     west_europe:     { label: "西ヨーロッパ",   ids: ["040","056","250","276","442","528","756"] },
     east_europe:     { label: "東ヨーロッパ",   ids: ["100","112","203","348","498","616","642","643","703","804"] },
-    south_europe:    { label: "南ヨーロッパ",   ids: ["008","070","191","300","380","499","620","688","705","724","807"] },
+    south_europe:    { label: "南ヨーロッパ",   ids: ["008","070","191","300","380","470","499","620","688","705","724","807"] },
 
     north_africa:    { label: "北アフリカ",     ids: ["012","434","504","729","732","788","818"] },
-    west_africa:     { label: "西アフリカ",     ids: ["204","270","288","324","384","430","466","478","562","566","624","686","694","768","854"] },
-    east_africa:     { label: "東アフリカ",     ids: ["108","231","232","262","404","450","454","508","646","706","716","728","800","834","894"] },
-    central_africa:  { label: "中部アフリカ",   ids: ["024","120","140","148","178","180","226","266"] },
+    west_africa:     { label: "西アフリカ",     ids: ["132","204","270","288","324","384","430","466","478","562","566","624","686","694","768","854"] },
+    east_africa:     { label: "東アフリカ",     ids: ["108","174","231","232","262","404","450","454","480","508","646","690","706","716","728","800","834","894"] },
+    central_africa:  { label: "中部アフリカ",   ids: ["024","120","140","148","178","180","226","266","678"] },
     southern_africa: { label: "南部アフリカ",   ids: ["072","426","516","710","748"] },
 
     central_america: { label: "中央アメリカ",   ids: ["084","188","222","320","340","558","591"] },
-    caribbean:       { label: "カリブ",         ids: ["044","192","214","332","388","630","780"] },
+    caribbean:       { label: "カリブ",         ids: ["044","052","192","214","332","388","630","780"] },
   };
   Object.keys(SUBREGIONS).forEach((k) => { SUBREGIONS[k].set = new Set(SUBREGIONS[k].ids); });
 
@@ -659,7 +659,7 @@
     const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
     const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
     let scale = 0.55 / Math.max(dx / cssW, dy / cssH);
-    scale = Math.max(1, Math.min(10, scale));
+    scale = Math.max(1, Math.min(14, scale));   // cap = zoom scaleExtent upper bound
     const tx = cssW / 2 - scale * cx, ty = cssH / 2 - scale * cy;
     const tr = d3.zoomIdentity.translate(tx, ty).scale(scale);
     const sel = animate ? canvasSel.transition().duration(650) : canvasSel;
@@ -952,6 +952,24 @@
       ctx.beginPath();
       geoPath(f);
       if (ctx.isPointInPath(px, py)) { hit = f; break; }
+    }
+    // Near-miss fallback: if the tap landed on ocean but a country's border is
+    // within ~8 CSS px, snap to it (helps tap tiny island nations). We stroke each
+    // path with a fat pen and test isPointInStroke. lineWidth is in the zoomed user
+    // space, so 16/t.k keeps the tolerance a constant ~8 CSS px on screen regardless
+    // of zoom. Multiple hits → pick the smallest country so islands beat big neighbours.
+    if (!hit) {
+      ctx.lineWidth = 16 / t.k;   // restored by ctx.restore() below
+      let bestArea = Infinity;
+      for (let i = 0; i < state.features.length; i++) {
+        const f = state.features[i];
+        ctx.beginPath();
+        geoPath(f);
+        if (ctx.isPointInStroke(px, py)) {
+          const a = geoPath.area(f);
+          if (a < bestArea) { bestArea = a; hit = f; }
+        }
+      }
     }
     ctx.restore();
     return hit;
