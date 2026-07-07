@@ -49,6 +49,23 @@
     return regionOf(f) === r;   // coarse continent
   }
 
+  // 世界一周モードの海路（フェリー航路・海峡）。監督者が 50m データの海岸線間距離から
+  // 機械生成し、日本から全182か国への到達可能性を検証済み。1本も改変しないこと。
+  const SEA_LINKS = [
+    ["008","380"], ["032","238"], ["036","360"], ["036","554"], ["036","598"], ["036","626"],
+    ["044","192"], ["044","840"], ["048","634"], ["048","682"], ["052","780"], ["090","548"],
+    ["090","598"], ["124","304"], ["132","686"], ["144","356"], ["144","462"], ["156","158"],
+    ["156","392"], ["156","410"], ["158","392"], ["158","608"], ["174","450"], ["174","508"],
+    ["174","834"], ["191","380"], ["192","214"], ["192","332"], ["192","388"], ["192","484"],
+    ["192","840"], ["196","300"], ["196","792"], ["208","578"], ["208","752"], ["214","630"],
+    ["226","678"], ["232","887"], ["233","246"], ["242","548"], ["242","882"], ["250","826"],
+    ["262","887"], ["266","678"], ["300","380"], ["304","352"], ["332","388"], ["352","578"],
+    ["356","462"], ["360","608"], ["360","702"], ["364","512"], ["364","784"], ["380","470"],
+    ["380","788"], ["392","410"], ["392","643"], ["400","818"], ["450","480"], ["450","508"],
+    ["450","690"], ["458","608"], ["458","702"], ["470","788"], ["504","724"], ["528","826"],
+    ["643","840"], ["682","818"], ["706","887"], ["780","862"]
+  ];
+
   // ---- DOM refs ----
   const $ = (id) => document.getElementById(id);
   const canvasSel = d3.select("#map");
@@ -65,7 +82,7 @@
     progTrack: $("progress-track"), progFill: $("progress-fill"),
     promptBar: $("prompt-bar"), promptKicker: $("prompt-kicker"),
     promptTarget: $("prompt-target"), promptHint: $("prompt-hint"),
-    giveup: $("giveup-btn"), choices: $("choices"),
+    giveup: $("giveup-btn"), hint: $("hint-btn"), choices: $("choices"),
     choicesGrid: $("choices-grid"), toast: $("toast"), toastIcon: $("toast-icon"),
     toastText: $("toast-text"), zoomControls: $("zoom-controls"),
     zoomIn: $("zoom-in"), zoomOut: $("zoom-out"), zoomReset: $("zoom-reset"),
@@ -99,6 +116,17 @@
     exploreTried: null, // たんけん: この問で推測済みの id（Set・重複タップ判定）
     exploreFound: 0,    // たんけん: 発見できた問の数（平均計算用）
     exploreTotalGuesses: 0, // たんけん: 発見できた問の推測回数合計（平均計算用）
+    journey: false,     // 世界一周: 隣接国タップで旅する（3旅=1セッション）
+    journeyRoute: [],   // 世界一周: たどった国の pad3 id 配列（経路線・トレイル）
+    journeyCurrent: null, // 世界一周: 現在地 pad3 id
+    journeyGoal: null,  // 世界一周: この旅のゴール pad3 id（地図上ではハイライトしない）
+    journeyMoves: 0,    // 世界一周: この旅の手数
+    journeyBest: 0,     // 世界一周: この旅の BFS 最短手数（目安）
+    journeyHints: 0,    // 世界一周: この旅のヒント使用回数
+    journeyMisses: 0,   // 世界一周: 非隣接タップ回数（内部カウンタ）
+    journeyLeg: 0,      // 世界一周: 完了した旅の数（0..3）
+    journeyStars: 0,    // 世界一周: 獲得した☆の合計
+    journeyShortest: 0, // 世界一周: 最短手数で到達した旅の数
     stats: {},          // padded id -> { c: 正解数, w: 誤答数, last: 最終出題epochMs }
     reasks: {},         // padded id -> このセッションで再挿入した回数
     locked: false, fittedFeatures: null,
@@ -126,6 +154,8 @@
   let landPath = null;             // every country in one Path2D (batched fill/stroke)
   const boundsMap = new Map();     // padded id -> [[x0,y0],[x1,y1]] projected bbox (culling)
   const geoCentroids = new Map();  // padded id -> [lon,lat] spherical centroid (たんけん距離計算)
+  const projCentroids = new Map(); // padded id -> [x,y] projected-plane centroid (世界一周の経路線); rebuilt with paths
+  const ADJ = new Map();           // padded id -> Set(padded id) 隣接グラフ (陸国境 topojson.neighbors + 海路 SEA_LINKS)
   // Gesture blit snapshot: the last sharp frame + the transform it was drawn at.
   let snapCanvas = null;           // reused offscreen backing buffer
   let snap = null;                 // { canvas, t0:{x,y,k} } while a gesture snapshot is live
@@ -345,6 +375,33 @@
     // real lon/lat, NOT the projected-plane centroid geoPath.centroid returns.
     geoCentroids.clear();
     state.features.forEach((f) => geoCentroids.set(pad3(f.id), d3.geoCentroid(f)));
+    buildAdjacency(topo, geo);
+  }
+
+  // 隣接グラフ（世界一周モード）。topo が手元にある buildFeatures から呼ぶ。
+  // 陸の国境は topojson.neighbors（返り値の index は geometries 配列＝geo.features と一致）、
+  // 海路は SEA_LINKS。いずれも pad3 id をキーに双方向で ADJ へ。COUNTRY_DATA に無い国は除外。
+  function buildAdjacency(topo, geo) {
+    ADJ.clear();
+    const geoms = topo.objects.countries.geometries;
+    const nb = topojson.neighbors(geoms);
+    // geometry index -> pad3 id（描画対象の国だけ。南極など COUNTRY_DATA 外は null にして無視）
+    const idAt = geo.features.map((f) => (f.id != null && dataFor(f.id)) ? pad3(f.id) : null);
+    const link = (a, b) => {
+      if (!a || !b || a === b) return;
+      if (!ADJ.has(a)) ADJ.set(a, new Set());
+      ADJ.get(a).add(b);
+    };
+    for (let i = 0; i < nb.length; i++) {
+      const a = idAt[i];
+      if (!a) continue;
+      nb[i].forEach((j) => { const b = idAt[j]; if (b) { link(a, b); link(b, a); } });
+    }
+    // 海路: 監督者生成の70本を双方向で追加（両端が収録国のときだけ）。
+    SEA_LINKS.forEach((pair) => {
+      const a = pad3(pair[0]), b = pad3(pair[1]);
+      if (dataFor(a) && dataFor(b)) { link(a, b); link(b, a); }
+    });
   }
 
   /* ============================================================
@@ -431,6 +488,8 @@
     COLORS.mWeak = g("--m-weak", "#e07a6a");
     COLORS.heatHot = g("--heat-hot", "#d13b2a");    // たんけん: 近い / 遠い の熱色
     COLORS.heatCold = g("--heat-cold", "#9fb8c4");
+    COLORS.journeyTrail = g("--journey-trail", "#bfe0e4");   // 世界一周: 訪問トレイル / あきらめ最短路
+    COLORS.journeyPath = g("--journey-path", "#7fc6cd");
   }
 
   // Bucket a country by its recorded performance → a fill color, or null for "not seen yet".
@@ -540,6 +599,7 @@
     if (!pathGen) pathGen = d3.geoPath(projection);   // NOT ctx-bound; feeds Path2D contexts
     paths.clear();
     boundsMap.clear();
+    projCentroids.clear();
     landPath = new Path2D();
     for (let i = 0; i < state.features.length; i++) {
       const f = state.features[i];
@@ -549,6 +609,7 @@
       pathGen(f);
       paths.set(id, p);
       boundsMap.set(id, geoPath.bounds(f));   // bounds() ignores the render context, so ctx-bound geoPath is safe
+      projCentroids.set(id, geoPath.centroid(f));   // projected-plane centroid for the 世界一周 route line (follows re-fits)
       // Stream into landPath too (instead of Path2D.addPath, which older Safari/Firefox
       // lack). Marks stay IN landPath; render step 2 just overpaints them.
       pathGen.context(landPath);
@@ -703,6 +764,24 @@
     //    drawCountry routine (countryFill resolves each id's mark color) so nothing drifts.
     if (state.marks.size) {
       for (const id of state.marks.keys()) drawCountry(id, strokeW);
+    }
+
+    // 2.5) 世界一周の経路線: たどった国の投影重心を結ぶ折れ線。マークの後・ラベルの前に、
+    //      画面一定幅(2/t.k)で描く。projCentroids は buildPaths で投影に追随済み。
+    //      ジェスチャー中(blit)は露出領域に描かれないが、停止時の render で揃う（許容）。
+    if (state.journey && state.journeyRoute && state.journeyRoute.length > 1) {
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < state.journeyRoute.length; i++) {
+        const c = projCentroids.get(state.journeyRoute[i]);
+        if (!c || isNaN(c[0])) continue;
+        if (!started) { ctx.moveTo(c[0], c[1]); started = true; }
+        else ctx.lineTo(c[0], c[1]);
+      }
+      ctx.lineWidth = 2 / t.k;
+      ctx.strokeStyle = COLORS.primary;
+      ctx.lineCap = "round";
+      ctx.stroke();
     }
 
     // 3) country-name labels (browse mode) — drawn unscaled in screen space so
@@ -894,6 +973,7 @@
       store.set(SETTINGS_KEY, state.settings);
       if (state.settings.mode === "browse") startBrowse();
       else if (state.settings.mode === "progress") startProgress();
+      else if (state.settings.mode === "journey") startJourney();
       else startQuiz();
     };
     els.retry.onclick = loadWorld;
@@ -902,17 +982,19 @@
       if (confirm("クイズをやめて設定に戻りますか？")) showSetup();
     };
     els.resultHome.onclick = showSetup;
-    // Wrap so the click MouseEvent is never passed in as reviewIds.
-    els.resultAgain.onclick = () => startQuiz();
+    // Wrap so the click MouseEvent is never passed in as reviewIds. 世界一周は別セッション
+    // 機構なので mode で分岐（startQuiz() 直結のままだと journey を再開できない）。
+    els.resultAgain.onclick = () => { if (state.settings.mode === "journey") startJourney(); else startQuiz(); };
     els.resultRetryMissed.onclick = () => startQuiz([...new Set(state.mistakes)]);
     els.giveup.onclick = onGiveUp;
+    els.hint.onclick = onHint;
     els.explainNext.onclick = onExplainNext;
   }
 
   // Restore a previously saved setup, validating every field before applying it.
   function applySavedSettings(s) {
     if (!s || typeof s !== "object") return;
-    const modes = ["find", "name", "explore", "browse", "progress"];
+    const modes = ["find", "name", "explore", "journey", "browse", "progress"];
     if (modes.indexOf(s.mode) !== -1) {
       state.settings.mode = s.mode;
       activateSeg("mode-seg", "mode", s.mode);
@@ -949,12 +1031,13 @@
   // Toggle quiz-only settings and the start button label for the study mode.
   function onModeChange(v) {
     state.settings.mode = v;
-    const noQuiz = v === "browse" || v === "progress";   // non-quiz views hide count/explain
-    if (els.countField) els.countField.hidden = noQuiz;
+    const noQuiz = v === "browse" || v === "progress";   // non-quiz views hide count/explain/sound
+    // 世界一周は3旅固定なので問題数だけ隠し、解説/効果音は出す。
+    if (els.countField) els.countField.hidden = noQuiz || v === "journey";
     if (els.explainField) els.explainField.hidden = noQuiz;
     if (els.soundField) els.soundField.hidden = noQuiz;
     els.start.textContent = v === "browse" ? "地図を見る" : v === "progress" ? "成績を見る"
-      : v === "explore" ? "たんけんに出る" : "スタート";
+      : v === "explore" ? "たんけんに出る" : v === "journey" ? "旅に出る" : "スタート";
   }
 
   function segGroup(id, attr, cb) {
@@ -980,9 +1063,12 @@
 
   function showSetup() {
     clearTimeout(advanceTimer);            // cancel any queued next-question/result
+    clearTimeout(hintTimer);               // cancel a pending 世界一周 hint restore
     stopConfetti();
     state.browsing = false;
     state.progressView = false;
+    state.journey = false;                 // 世界一周の経路線・トレイルを次のモードへ持ち越さない
+    state.journeyRoute = [];
     state.paint = null;                    // never let mastery colors bleed into other modes
     state.labels = false;
     els.stats.classList.remove("browse");
@@ -1059,6 +1145,7 @@
     state.exploreFound = 0; state.exploreTotalGuesses = 0;
     state.browsing = false;
     state.progressView = false;
+    state.journey = false; state.journeyRoute = [];   // 世界一周の残骸を持ち越さない
     state.paint = null;                    // clear any mastery coloring from a prior view
 
     els.setup.hidden = true;
@@ -1121,7 +1208,8 @@
   function askFind(c) {
     els.choices.hidden = true;
     els.promptBar.hidden = false;
-    els.giveup.hidden = true;                 // たんけん専用ボタン
+    els.giveup.hidden = true;                 // たんけん / 世界一周 専用ボタン
+    els.hint.hidden = true;
     els.promptHint.textContent = "地図をタップ";
     els.promptKicker.textContent = "この国はどこ？";
     els.promptTarget.textContent = c.ja;
@@ -1137,6 +1225,8 @@
     els.choices.hidden = true;
     els.promptBar.hidden = false;
     els.giveup.hidden = false;
+    els.giveup.textContent = "ギブアップ";     // 世界一周が「あきらめる」に書き換えるので戻す
+    els.hint.hidden = true;
     els.promptKicker.textContent = "なぞの国はどこ？";
     els.promptTarget.textContent = "???";
     state.exploreGuesses = 0;
@@ -1201,6 +1291,7 @@
 
   // ギブアップ: 正解を見せ、scoreWrong で mistakes に入れて（復習ボタンが効く）finishTurn へ。
   function onGiveUp() {
+    if (state.settings.mode === "journey") { onJourneyGiveUp(); return; }
     if (state.locked || state.settings.mode !== "explore") return;
     state.locked = true;
     els.giveup.hidden = true;
@@ -1212,6 +1303,260 @@
     // find の不正解と同じく、解説オフのときだけ自前でズーム（オンなら showExplain が寄せる）。
     if (!state.settings.explain) focusFeature(c.feature);
     finishTurn(c, false, 2200);
+  }
+
+  /* ============================================================
+     世界一周 (journey) — スタート国からゴール国へ、隣の国だけをタップして移動する旅。
+     1セッション=3旅（前の旅の終了地点が次の旅のスタート）。隣接は ADJ（陸国境+海路）。
+     このモードは stats / mistakes / recordAnswer を一切使わない（別スキルなので学習記録を汚さない）。
+     ============================================================ */
+  let hintTimer;
+
+  // BFS: id から全到達国への最短手数と直前ノード。ゴール選定・目安手数・あきらめ最短路に共用。
+  function bfsFrom(id) {
+    const dist = new Map([[id, 0]]);
+    const prev = new Map();
+    const q = [id];
+    for (let h = 0; h < q.length; h++) {
+      const cur = q[h];
+      const nb = ADJ.get(cur);
+      if (!nb) continue;
+      const d = dist.get(cur) + 1;
+      nb.forEach((n) => { if (!dist.has(n)) { dist.set(n, d); prev.set(n, cur); q.push(n); } });
+    }
+    return { dist, prev };
+  }
+
+  // このセッション最初のスタート国。region=all は日本(392)、それ以外は pool からランダム。
+  function pickJourneyStart() {
+    if (state.settings.region === "all" && state.pool.some((c) => c.id === "392")) return "392";
+    return state.pool[(Math.random() * state.pool.length) | 0].id;
+  }
+
+  // スタートから BFS で 4〜9 手の pool 内の国をゴールに。無ければ 2〜11、それも無ければ pool から。
+  function pickJourneyGoal(startId, dist) {
+    const inRange = (lo, hi) => state.pool
+      .filter((c) => { const d = dist.get(c.id); return d != null && d >= lo && d <= hi && c.id !== startId; })
+      .map((c) => c.id);
+    let cands = inRange(4, 9);
+    if (!cands.length) cands = inRange(2, 11);
+    if (!cands.length) cands = state.pool.filter((c) => c.id !== startId).map((c) => c.id);
+    if (!cands.length) cands = [startId];   // pool に1国しか無いときの退避
+    return cands[(Math.random() * cands.length) | 0];
+  }
+
+  function journeyFitFeatures() {
+    return state.settings.region === "all" ? state.features : state.pool.map((c) => c.feature);
+  }
+
+  function startJourney() {
+    stopConfetti();
+    buildPool();
+    if (state.pool.length < 2) { alert("この地域には旅ができるほどの国がありません。"); return; }
+
+    state.journey = true;
+    state.browsing = false;
+    state.progressView = false;
+    state.survival = false;
+    state.survivalOver = false;
+    state.locked = false;
+    state.paint = null;
+    state.labels = false;
+    state.mistakes = [];                    // 復習ボタンを出さない（journey は mistakes を使わない）
+    state.journeyLeg = 0; state.journeyStars = 0; state.journeyShortest = 0; state.journeyMisses = 0;
+    state.journeyRoute = [];
+
+    els.setup.hidden = true;
+    els.result.hidden = true;
+    els.stats.hidden = false;
+    els.stats.classList.remove("browse");
+    els.livesStat.hidden = true;
+    els.progTrack.hidden = false;
+    els.choices.hidden = true;
+    els.zoomControls.hidden = false;
+    els.masteryLegend.hidden = true;
+    els.explainPanel.hidden = true;
+
+    clearMapStates();
+    newLeg(pickJourneyStart());
+  }
+
+  // 1つの旅の開始（startId から）。ゴールを選び、トレイル/経路/HUD を初期化して region にフィット。
+  function newLeg(startId) {
+    clearTimeout(hintTimer);
+    state.locked = false;
+    els.explainPanel.hidden = true;
+    els.promptBar.hidden = false;
+    els.choices.hidden = true;
+    els.hint.hidden = false;
+    els.giveup.hidden = false;
+    els.giveup.textContent = "あきらめる";
+
+    const { dist } = bfsFrom(startId);
+    const goal = pickJourneyGoal(startId, dist);
+    state.journeyCurrent = startId;
+    state.journeyGoal = goal;
+    state.journeyBest = dist.get(goal) || 0;
+    state.journeyMoves = 0;
+    state.journeyHints = 0;
+    state.journeyRoute = [startId];
+    state.paint = new Map([[startId, COLORS.journeyTrail]]);   // 訪問トレイル（現在地は mark で上塗り）
+    state.marks.clear();
+    setMark(startId, "hi");
+
+    els.progFill.style.width = (state.journeyLeg / 3 * 100) + "%";
+    updateJourneyStats();
+    updateJourneyHud();
+    fitToFeatures(journeyFitFeatures(), true);
+  }
+
+  function updateJourneyStats() {
+    els.score.firstChild.textContent = state.journeyStars;
+    els.answered.textContent = "/9";       // ☆合計 / 9
+    els.streak.textContent = state.journeyMoves;   // 「連続」欄を手数に流用
+  }
+  function updateJourneyHud() {
+    const gf = state.byId.get(state.journeyGoal);
+    els.promptKicker.textContent = (gf ? withFlag(state.journeyGoal, nameOf(gf)) : "?") + " をめざせ！";
+    const cf = state.byId.get(state.journeyCurrent);
+    els.promptTarget.textContent = cf ? nameOf(cf) : "";
+    els.promptHint.textContent = "手数 " + state.journeyMoves + " / 目安 " + state.journeyBest;
+  }
+
+  // 移動タップ。現在地=無視 / 隣接=移動（ゴールなら到達） / 非隣接=ミス（移動しない）。
+  function onJourneyTap(f) {
+    const gid = pad3(f.id);
+    if (gid === state.journeyCurrent) return;
+    const nb = ADJ.get(state.journeyCurrent);
+    if (!nb || !nb.has(gid)) {
+      buzz(30);
+      const cf = state.byId.get(state.journeyCurrent);
+      toast(nameOf(f) + " は " + (cf ? nameOf(cf) : "") + " のとなりではありません", "ng");
+      state.journeyMisses++;
+      return;
+    }
+    // 移動
+    clearTimeout(hintTimer);               // 移動したらヒント表示を確定的に片付ける
+    state.journeyCurrent = gid;
+    state.journeyMoves++;
+    state.journeyRoute.push(gid);
+    state.paint.set(gid, COLORS.journeyTrail);
+    state.marks.clear();
+    setMark(gid, "hi");
+    updateJourneyStats();
+    updateJourneyHud();
+    if (gid === state.journeyGoal) { onJourneyArrive(); return; }
+    render();
+  }
+
+  function onJourneyArrive() {
+    state.locked = true;
+    els.hint.hidden = true;
+    els.giveup.hidden = true;
+    state.marks.clear();
+    setMark(state.journeyGoal, "correct");
+    render();
+    buzz(15); soundCorrect();
+    // 星評価: 最短&ヒント0 → ☆3、最短+2以内 → ☆2、それ以外 → ☆1
+    let stars;
+    if (state.journeyMoves === state.journeyBest && state.journeyHints === 0) stars = 3;
+    else if (state.journeyMoves <= state.journeyBest + 2) stars = 2;
+    else stars = 1;
+    state.journeyStars += stars;
+    if (state.journeyMoves === state.journeyBest) state.journeyShortest++;
+    updateJourneyStats();
+    const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
+    toast("🎉 とうちゃく！ " + starStr + (stars === 3 ? " 最短ルート！" : ""), "ok");
+    finishLeg(true);
+  }
+
+  function onJourneyGiveUp() {
+    if (state.locked || state.settings.mode !== "journey") return;
+    state.locked = true;
+    els.hint.hidden = true;
+    els.giveup.hidden = true;
+    clearTimeout(hintTimer);
+    // 現在地からゴールまでの最短路を復元して濃い色で描く。
+    const { prev } = bfsFrom(state.journeyCurrent);
+    const path = [];
+    let n = state.journeyGoal;
+    if (n === state.journeyCurrent || prev.has(n)) {
+      while (n != null) { path.unshift(n); if (n === state.journeyCurrent) break; n = prev.get(n); }
+    }
+    if (path.length > 1) {
+      path.forEach((id) => state.paint.set(id, COLORS.journeyPath));
+      state.journeyRoute = path;
+    }
+    state.marks.clear();
+    setMark(state.journeyGoal, "correct");
+    render();
+    const remain = path.length > 1 ? path.length - 1 : 0;
+    toast("最短ルートはあと " + remain + " 手でした", "");
+    finishLeg(false);                      // ☆0
+  }
+
+  // 現在地の全隣接国を1.2秒だけ mark "target" で光らせる。旅をまたいだら復元しない。
+  function onHint() {
+    if (state.locked || state.settings.mode !== "journey") return;
+    const nb = ADJ.get(state.journeyCurrent);
+    if (!nb || !nb.size) return;
+    state.journeyHints++;
+    nb.forEach((id) => { if (state.byId.has(id)) setMark(id, "target"); });
+    setMark(state.journeyCurrent, "hi");   // 現在地は残す
+    render();
+    clearTimeout(hintTimer);
+    const leg = state.journeyLeg;
+    hintTimer = setTimeout(() => {
+      if (!state.journey || leg !== state.journeyLeg) return;   // 旅が進んでいたら無効
+      state.marks.clear();
+      setMark(state.journeyCurrent, "hi");
+      render();
+    }, 1200);
+  }
+
+  // 旅の完了処理: 進捗を進め、解説オンなら ゴール国の解説パネル、オフなら遅延後に次の旅へ。
+  function finishLeg(arrived) {
+    state.journeyLeg++;
+    els.progFill.style.width = (state.journeyLeg / 3 * 100) + "%";
+    if (state.settings.explain) {
+      const f = state.byId.get(state.journeyGoal);
+      const c = { id: state.journeyGoal, ja: nameOf(f), region: regionOf(f), feature: f };
+      showExplain(c, arrived);             // 既存パネルを流用（stats は書かない）
+      els.explainBadge.textContent = arrived ? "とうちゃく" : "ゴール";
+    } else {
+      clearTimeout(advanceTimer);
+      advanceTimer = setTimeout(advanceJourney, arrived ? 1800 : 3000);
+    }
+  }
+
+  function advanceJourney() {
+    if (state.journeyLeg >= 3) { endJourney(); return; }
+    newLeg(state.journeyCurrent);          // 前旅の終了地点が次のスタート
+  }
+
+  function endJourney() {
+    els.progFill.style.width = "100%";
+    els.promptBar.hidden = true;
+    els.choices.hidden = true;
+    els.explainPanel.hidden = true;
+    els.stats.hidden = true;
+    els.livesStat.hidden = true;
+    els.hint.hidden = true;
+    els.giveup.hidden = true;
+    state.journey = false;
+    state.journeyRoute = [];
+    clearMapStates();
+
+    els.resultEyebrow.textContent = "世界一周おつかれさま！";
+    els.resultNum.textContent = state.journeyStars;
+    els.resultDen.textContent = "/ 9";
+    els.resultPct.textContent = "最短一致 " + state.journeyShortest + "回";
+    // mistakes 空なので復習系は出さない。「もう一度」を primary に。
+    els.resultReview.hidden = true;
+    els.resultRetryMissed.hidden = true;
+    els.resultAgain.className = "btn primary";
+    els.result.hidden = false;
+    if (state.journeyStars === 9) { soundFanfare(); startConfetti(); }   // 全旅最短のパーフェクト
   }
 
   // Pixel-exact hit testing: test the pointer against the SAME cached Path2D objects
@@ -1263,6 +1608,7 @@
     if (state.browsing) { showBrowseDetail(f); return; }
     if (state.locked) return;
     if (state.settings.mode === "explore") { onExploreGuess(f); return; }
+    if (state.settings.mode === "journey") { onJourneyTap(f); return; }
     if (state.settings.mode !== "find") return;
 
     state.locked = true;
@@ -1435,6 +1781,7 @@
   function onExplainNext() {
     els.explainPanel.hidden = true;
     if (state.browsing) { clearMapStates(); return; }   // keep browsing & labels
+    if (state.journey) { advanceJourney(); return; }     // 世界一周: 次の旅（または結果）へ
     if (state.survivalOver) { endQuiz(); return; }       // ライフ切れ: フィードバックを見た後で終了
     state.idx++;
     nextQuestion();
@@ -1459,6 +1806,7 @@
     if (!state.pool.length) { alert("この地域には収録国がありません。"); return; }
     state.browsing = true;
     state.progressView = false;
+    state.journey = false; state.journeyRoute = [];
     state.paint = null;                    // plain browse: no mastery coloring
     state.locked = false;
 
@@ -1493,6 +1841,7 @@
     if (!state.pool.length) { alert("この地域には収録国がありません。"); return; }
     state.browsing = true;                 // reuse browse tap→detail + ✕→setup behavior
     state.progressView = true;
+    state.journey = false; state.journeyRoute = [];
     state.locked = false;
     state.paint = buildPaint();            // tint land by mastery bucket
 

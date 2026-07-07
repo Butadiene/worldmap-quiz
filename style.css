@@ -27,6 +27,9 @@
   --heat-hot:  #d13b2a;   /* たんけん: 近い（あつい） */
   --heat-cold: #9fb8c4;   /* たんけん: 遠い（つめたい） */
 
+  --journey-trail: #bfe0e4;  /* 世界一周: 訪問済みの国（薄い primary 系） */
+  --journey-path:  #7fc6cd;  /* 世界一周: あきらめ時の最短ルート（濃いめ） */
+
   --shadow: 0 10px 30px -12px rgba(16, 48, 58, .35);
   --shadow-sm: 0 4px 14px -6px rgba(16, 48, 58, .3);
   --radius: 16px;
