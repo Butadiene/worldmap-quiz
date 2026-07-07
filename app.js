@@ -112,6 +112,21 @@
   let cssW = 0, cssH = 0, dpr = 1, pulseRAF = 0;
   const COLORS = {};    // filled from CSS custom properties at init
 
+  // Projected-path cache (Run 8). The projection only changes on fit/resize, so pan
+  // and zoom are pure ctx-transform tricks — there is no need to re-run the d3
+  // projection every frame. buildPaths() reprojects all countries into Path2D objects
+  // once per fit; render() and featureAt() then just replay those under the transform.
+  let pathGen = null;              // Path2D-backed d3.geoPath, kept OFF the ctx-bound geoPath
+  const paths = new Map();         // padded id -> Path2D (projected outline)
+  let landPath = null;             // every country in one Path2D (batched fill/stroke)
+  const boundsMap = new Map();     // padded id -> [[x0,y0],[x1,y1]] projected bbox (culling)
+  // Gesture blit snapshot: the last sharp frame + the transform it was drawn at.
+  let snapCanvas = null;           // reused offscreen backing buffer
+  let snap = null;                 // { canvas, t0:{x,y,k} } while a gesture snapshot is live
+  // Cap the backing-store resolution: 3x phones would otherwise push ~2.25x the pixels
+  // of a 2x panel for no visible gain. All canvas sizing goes through this.
+  const deviceRatio = () => Math.min(window.devicePixelRatio || 1, 2);
+
   // localStorage wrapper — Safari private mode etc. can throw, so degrade quietly.
   const store = {
     get(key, fallback) {
@@ -327,7 +342,7 @@
      ============================================================ */
   function renderMap() {
     projection = d3.geoNaturalEarth1();
-    geoPath = d3.geoPath(projection, ctx);   // canvas-backed path generator
+    geoPath = d3.geoPath(projection, ctx);   // kept for centroid/bounds/area; drawing goes through buildPaths' Path2D cache
 
     resizeCanvas();
 
@@ -338,14 +353,23 @@
           fling.interrupted = false;
           stopFling(true);
           fling.t = 0;             // force trackFling to start sampling fresh
+          captureSnap();           // freeze the current sharp frame for gesture blitting
         }
       })
       .on("zoom", (ev) => {
         state.transform = ev.transform;
         if (ev.sourceEvent) trackFling(ev.transform);
-        render();
+        // During a gesture (finger pan/pinch OR an inertial fling step) blit the
+        // frozen frame; otherwise (programmatic transforms, zoom buttons, fits) do a
+        // full sharp render. fling steps are programmatic, so fling.raf is the tell.
+        const gesturing = !!ev.sourceEvent || fling.raf;
+        if (gesturing && snap) blit();
+        else render();
       })
       .on("end", (ev) => {
+        // Starting a fling keeps blitting (its steps re-enter the zoom handler);
+        // startFling() itself calls render() when it decides NOT to glide, so a
+        // released gesture always terminates on a sharp frame.
         if (ev.sourceEvent) startFling();
       });
     canvasSel.call(zoom);
@@ -376,9 +400,10 @@
     const rect = els.stage.getBoundingClientRect();
     cssW = rect.width || window.innerWidth;
     cssH = rect.height || window.innerHeight;
-    dpr = window.devicePixelRatio || 1;
+    dpr = deviceRatio();
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
+    snap = null;   // backing store resized: any gesture snapshot is stale
   }
 
   function readColors() {
@@ -469,9 +494,87 @@
   }
   const setMark = (id, type) => state.marks.set(pad3(id), type);
 
-  // The whole map is redrawn per frame; 110m/~170 polygons on canvas is cheap.
+  // Reproject every country into a cached Path2D. Called once after each projection
+  // change (fitToFeatures / syncSizeNow) — the ONLY places projection.fitExtent runs —
+  // so paths / landPath / boundsMap always agree with the current projection. pathGen
+  // is a SEPARATE geoPath so the ctx-bound `geoPath` (used for centroid/bounds/area and
+  // its context) is never repointed at a Path2D.
+  function buildPaths() {
+    if (!projection) return;
+    if (!pathGen) pathGen = d3.geoPath(projection);   // NOT ctx-bound; feeds Path2D contexts
+    paths.clear();
+    boundsMap.clear();
+    landPath = new Path2D();
+    for (let i = 0; i < state.features.length; i++) {
+      const f = state.features[i];
+      const id = pad3(f.id);
+      const p = new Path2D();
+      pathGen.context(p);
+      pathGen(f);
+      paths.set(id, p);
+      boundsMap.set(id, geoPath.bounds(f));   // bounds() ignores the render context, so ctx-bound geoPath is safe
+      // Stream into landPath too (instead of Path2D.addPath, which older Safari/Firefox
+      // lack). Marks stay IN landPath; render step 2 just overpaints them.
+      pathGen.context(landPath);
+      pathGen(f);
+    }
+  }
+
+  // Does a country's projected bbox fall within the padded viewport under transform t?
+  // Screen(CSS) pos of a world point (x,y) is (t.x + t.k*x, t.y + t.k*y); we test the
+  // bbox corners against [−pad, cssW+pad] × [−pad, cssH+pad]. Cheap enough for 182×frame.
+  function onScreen(id, t, pad) {
+    const b = boundsMap.get(id);
+    if (!b) return true;
+    const x0 = t.x + t.k * b[0][0], y0 = t.y + t.k * b[0][1];
+    const x1 = t.x + t.k * b[1][0], y1 = t.y + t.k * b[1][1];
+    return !(x1 < -pad || x0 > cssW + pad || y1 < -pad || y0 > cssH + pad);
+  }
+
+  // Copy the current (sharp) canvas into an offscreen buffer for gesture blitting.
+  // The live canvas is guaranteed sharp here: every gesture ends with a render(). t0
+  // records the transform at capture so blit() can map the snapshot to the live view.
+  function captureSnap() {
+    if (!canvas.width || !canvas.height) { snap = null; return; }
+    if (!snapCanvas) snapCanvas = document.createElement("canvas");
+    if (snapCanvas.width !== canvas.width || snapCanvas.height !== canvas.height) {
+      snapCanvas.width = canvas.width;
+      snapCanvas.height = canvas.height;
+    }
+    const sctx = snapCanvas.getContext("2d");
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    sctx.clearRect(0, 0, snapCanvas.width, snapCanvas.height);
+    sctx.drawImage(canvas, 0, 0);
+    const tr = state.transform || d3.zoomIdentity;
+    snap = { canvas: snapCanvas, t0: { x: tr.x, y: tr.y, k: tr.k } };
+  }
+
+  // Gesture frame: instead of re-drawing 182 paths, slide/scale the last sharp frame.
+  // Derivation — a world point p sat on the snapshot at CSS position s0 = t0.x + t0.k*p.
+  // We want it at s = t.x + t.k*p. Writing s = A + r*s0 and solving:
+  //   r = t.k / t0.k     (so r*t0.k = t.k)
+  //   A = t.x − r*t0.x   →   A + r*s0 = (t.x − r·t0.x) + r·(t0.x + t0.k·p) = t.x + t.k·p = s ✓
+  // So translate by A then scale by r maps every snapshot pixel to its live position.
+  function blit() {
+    if (!snap) { render(); return; }
+    const t = state.transform || d3.zoomIdentity;
+    const r = t.k / snap.t0.k;
+    const offsetX = t.x - r * snap.t0.x;
+    const offsetY = t.y - r * snap.t0.y;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(r, r);
+    // snap.canvas backing store is cssW*dpr × cssH*dpr; drawing it at CSS size (dpr is
+    // already in the transform) reproduces the same coordinate basis a render() uses.
+    ctx.drawImage(snap.canvas, 0, 0, snap.canvas.width / dpr, snap.canvas.height / dpr);
+  }
+
+  // The map is redrawn from the Path2D cache — no per-frame reprojection. Marked
+  // countries stay inside landPath and are simply overpainted opaquely on top, so
+  // landPath is independent of state.marks and never needs rebuilding per answer.
   function render() {
-    if (!ctx || !projection) return;
+    if (!ctx || !projection || !landPath) return;
     const t = state.transform || d3.zoomIdentity;
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -482,51 +585,54 @@
     ctx.lineJoin = "round";
 
     // constant on-screen stroke like SVG's non-scaling-stroke. Drawn during pans
-    // and pinches too: borders vanishing mid-gesture reads as a glitch, and the
-    // whole world strokes as one batched path so the extra pass stays cheap.
+    // and pinches too: borders vanishing mid-gesture reads as a glitch.
     const strokeW = 0.7 / t.k;
+    // Viewport culling above a small zoom: when most of the world is off-screen,
+    // draw only countries whose projected bbox meets the viewport. Near the world
+    // view (k<=1.2) everything is visible, so the batched landPath is faster.
+    const cull = t.k > 1.2;
+    const PAD = 50;
 
-    // 1) all unmarked land. Normally one batched path (one fill, one stroke). In
-    //    成績マップ mode state.paint groups countries by color, so batch per color.
+    // 1) unmarked land. Normally the whole world as one batched fill/stroke; in
+    //    成績マップ mode each country fills with its own bucket color.
     if (!state.paint) {
-      ctx.beginPath();
-      for (let i = 0; i < state.features.length; i++) {
-        const f = state.features[i];
-        if (state.marks.has(pad3(f.id))) continue;
-        geoPath(f);
+      if (cull) {
+        ctx.fillStyle = COLORS.land;
+        ctx.strokeStyle = COLORS.landStroke;
+        ctx.lineWidth = strokeW;
+        for (let i = 0; i < state.features.length; i++) {
+          const id = pad3(state.features[i].id);
+          if (!onScreen(id, t, PAD)) continue;
+          const p = paths.get(id);
+          ctx.fill(p);
+          if (strokeW > 0) ctx.stroke(p);
+        }
+      } else {
+        ctx.fillStyle = COLORS.land;
+        ctx.fill(landPath);
+        if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landPath); }
       }
-      ctx.fillStyle = COLORS.land;
-      ctx.fill();
-      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(); }
     } else {
-      const groups = new Map();   // color -> features sharing it
       for (let i = 0; i < state.features.length; i++) {
-        const f = state.features[i];
-        if (state.marks.has(pad3(f.id))) continue;
-        const col = state.paint.get(pad3(f.id)) || COLORS.land;
-        let arr = groups.get(col);
-        if (!arr) { arr = []; groups.set(col, arr); }
-        arr.push(f);
+        const id = pad3(state.features[i].id);
+        if (cull && !onScreen(id, t, PAD)) continue;
+        ctx.fillStyle = state.paint.get(id) || COLORS.land;
+        ctx.fill(paths.get(id));
       }
-      for (const [col, arr] of groups) {
-        ctx.beginPath();
-        for (let i = 0; i < arr.length; i++) geoPath(arr[i]);
-        ctx.fillStyle = col;
-        ctx.fill();
-        if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(); }
-      }
+      // one batched stroke pass over the whole world (cheap: a single stroke() call)
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landPath); }
     }
 
-    // 2) marked countries (usually 0-2) drawn individually on top
+    // 2) marked countries (usually 0-2) overpainted individually on top
     if (state.marks.size) {
+      ctx.lineWidth = strokeW;
+      ctx.strokeStyle = COLORS.landStroke;
       for (const [id, mark] of state.marks) {
-        const f = state.byId.get(id);
-        if (!f) continue;
-        ctx.beginPath();
-        geoPath(f);
+        const p = paths.get(id);
+        if (!p) continue;
         ctx.fillStyle = markFill(mark);
-        ctx.fill();
-        if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(); }
+        ctx.fill(p);
+        if (strokeW > 0) ctx.stroke(p);
       }
     }
 
@@ -626,7 +732,9 @@
       canvasSel.call(zoom.translateBy, fling.vx * dt / k, fling.vy * dt / k);
       const decay = Math.exp(-DECAY * dt);
       fling.vx *= decay; fling.vy *= decay;
-      fling.raf = Math.hypot(fling.vx, fling.vy) > 0.02 ? requestAnimationFrame(step) : 0;
+      const cont = Math.hypot(fling.vx, fling.vy) > 0.02;
+      fling.raf = cont ? requestAnimationFrame(step) : 0;
+      if (!cont) render();   // glide settled → replace the last blit with a sharp frame
     };
     fling.raf = requestAnimationFrame(step);
   }
@@ -637,6 +745,7 @@
     resizeCanvas();
     const fc = { type: "FeatureCollection", features };
     projection.fitExtent([[20, 20], [cssW - 20, cssH - 20]], fc);
+    buildPaths();                // reproject the Path2D cache to the new framing
     resetZoom(animate);
     if (!animate) render();
   }
@@ -673,14 +782,16 @@
     if (!projection) return false;
     const rect = els.stage.getBoundingClientRect();
     const w = rect.width || cssW, h = rect.height || cssH;
-    const dprNow = window.devicePixelRatio || 1;
+    const dprNow = deviceRatio();
     if (Math.abs(w - cssW) < 0.5 && Math.abs(h - cssH) < 0.5 && dprNow === dpr) return false;
     cssW = w; cssH = h; dpr = dprNow;
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
+    snap = null;                 // backing store resized: any gesture snapshot is stale
     const feats = state.fittedFeatures || state.features;
     projection.fitExtent([[20, 20], [cssW - 20, cssH - 20]],
       { type: "FeatureCollection", features: feats });
+    buildPaths();                // reproject the Path2D cache to the resized framing
     if (state.labels) buildLabels(feats);
     return true;
   }
@@ -935,9 +1046,10 @@
     els.promptTarget.textContent = c.ja;
   }
 
-  // Pixel-exact hit testing: rebuild each country's path under the SAME transform
-  // used to draw it and let the canvas test the pointer against it. This matches
-  // exactly what's on screen — no projection.invert / spherical-vs-planar drift.
+  // Pixel-exact hit testing: test the pointer against the SAME cached Path2D objects
+  // render() draws, under the SAME dpr+zoom transform. isPointInPath/Stroke take the
+  // point in backing-store px and transform the path by the CTM, so this matches what's
+  // on screen exactly — no projection.invert / spherical-vs-planar drift.
   function featureAt(mx, my) {
     if (!ctx || !projection) return null;
     const t = state.transform || d3.zoomIdentity;
@@ -949,9 +1061,8 @@
     let hit = null;
     for (let i = 0; i < state.features.length; i++) {
       const f = state.features[i];
-      ctx.beginPath();
-      geoPath(f);
-      if (ctx.isPointInPath(px, py)) { hit = f; break; }
+      const p = paths.get(pad3(f.id));
+      if (p && ctx.isPointInPath(p, px, py)) { hit = f; break; }
     }
     // Near-miss fallback: if the tap landed on ocean but a country's border is
     // within ~8 CSS px, snap to it (helps tap tiny island nations). We stroke each
@@ -963,9 +1074,8 @@
       let bestArea = Infinity;
       for (let i = 0; i < state.features.length; i++) {
         const f = state.features[i];
-        ctx.beginPath();
-        geoPath(f);
-        if (ctx.isPointInStroke(px, py)) {
+        const p = paths.get(pad3(f.id));
+        if (p && ctx.isPointInStroke(p, px, py)) {
           const a = geoPath.area(f);
           if (a < bestArea) { bestArea = a; hit = f; }
         }
