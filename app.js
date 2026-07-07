@@ -494,6 +494,30 @@
   }
   const setMark = (id, type) => state.marks.set(pad3(id), type);
 
+  // The final composited fill a country shows in render(): a mark (painted on top)
+  // wins, else its 成績マップ bucket, else plain land. Single source of truth for the
+  // fill color so render() and blit()'s exposed-ring live draw can never disagree.
+  function countryFill(id) {
+    const mark = state.marks.get(id);
+    if (mark) return markFill(mark);
+    if (state.paint) return state.paint.get(id) || COLORS.land;
+    return COLORS.land;
+  }
+  // Draw one country exactly as render() composites it: fill + constant-width border.
+  // Shared by render()'s individual passes and blit()'s exposed-ring redraw so the
+  // two paths stay pixel-identical.
+  function drawCountry(id, strokeW) {
+    const p = paths.get(id);
+    if (!p) return;
+    ctx.fillStyle = countryFill(id);
+    ctx.fill(p);
+    if (strokeW > 0) {
+      ctx.lineWidth = strokeW;
+      ctx.strokeStyle = COLORS.landStroke;
+      ctx.stroke(p);
+    }
+  }
+
   // Reproject every country into a cached Path2D. Called once after each projection
   // change (fitToFeatures / syncSizeNow) — the ONLY places projection.fitExtent runs —
   // so paths / landPath / boundsMap always agree with the current projection. pathGen
@@ -561,13 +585,57 @@
     const r = t.k / snap.t0.k;
     const offsetX = t.x - r * snap.t0.x;
     const offsetY = t.y - r * snap.t0.y;
+    // Coverage rect R (in CSS px): where the snapshot lands on screen this frame.
+    const snapW = snap.canvas.width / dpr, snapH = snap.canvas.height / dpr;
+    const Rw = snapW * r, Rh = snapH * r;
+
+    // How much of the viewport R still covers. Areas captured off-screen (blank in the
+    // snapshot) show up as viewport minus R and must be drawn live, or they stay blank
+    // until the gesture ends (the 2-second lag this Run fixes).
+    const iw = Math.max(0, Math.min(cssW, offsetX + Rw) - Math.max(0, offsetX));
+    const ih = Math.max(0, Math.min(cssH, offsetY + Rh) - Math.max(0, offsetY));
+    const coverRatio = (iw * ih) / (cssW * cssH || 1);
+
+    // Too little of the frozen frame is left (fast fling / big pinch-out): the exposed
+    // ring would be most of the screen, so just re-render sharp this one frame and
+    // re-snapshot. A culled render() is cheap enough here; the next gesture frame then
+    // blits from the fresh, fully-covering image. render() BEFORE captureSnap() — the
+    // latter assumes the live canvas is already sharp.
+    if (coverRatio < 0.5) { render(); captureSnap(); return; }
+
+    // Transfer the frozen frame (Run 8 math).
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssW, cssH);
     ctx.translate(offsetX, offsetY);
     ctx.scale(r, r);
     // snap.canvas backing store is cssW*dpr × cssH*dpr; drawing it at CSS size (dpr is
     // already in the transform) reproduces the same coordinate basis a render() uses.
-    ctx.drawImage(snap.canvas, 0, 0, snap.canvas.width / dpr, snap.canvas.height / dpr);
+    ctx.drawImage(snap.canvas, 0, 0, snapW, snapH);
+
+    // R fully covers the viewport (within a px guard): nothing exposed, transfer is enough.
+    const G = 0.5;
+    if (offsetX <= G && offsetY <= G && offsetX + Rw >= cssW - G && offsetY + Rh >= cssH - G) return;
+
+    // Partial cover: live-draw only the exposed region (viewport − R) with the SAME
+    // per-country routine render() uses, so revealed land matches exactly. An evenodd
+    // clip of viewport ⊕ R isolates the exposed ring; the transfer above keeps R itself.
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const clip = new Path2D();
+    clip.rect(0, 0, cssW, cssH);          // viewport
+    clip.rect(offsetX, offsetY, Rw, Rh);  // snapshot coverage
+    ctx.clip(clip, "evenodd");            // viewport minus R = exposed
+    ctx.translate(t.x, t.y);
+    ctx.scale(t.k, t.k);
+    ctx.lineJoin = "round";
+    const strokeW = 0.7 / t.k;            // same constant on-screen border as render()
+    // Only viewport-intersecting countries; the clip discards anything outside the ring.
+    for (let i = 0; i < state.features.length; i++) {
+      const id = pad3(state.features[i].id);
+      if (!onScreen(id, t, 50)) continue;
+      drawCountry(id, strokeW);
+    }
+    ctx.restore();
   }
 
   // The map is redrawn from the Path2D cache — no per-frame reprojection. Marked
@@ -597,15 +665,11 @@
     //    成績マップ mode each country fills with its own bucket color.
     if (!state.paint) {
       if (cull) {
-        ctx.fillStyle = COLORS.land;
-        ctx.strokeStyle = COLORS.landStroke;
-        ctx.lineWidth = strokeW;
+        // Individual per-country draw (shared with blit's exposed-ring pass via drawCountry).
         for (let i = 0; i < state.features.length; i++) {
           const id = pad3(state.features[i].id);
           if (!onScreen(id, t, PAD)) continue;
-          const p = paths.get(id);
-          ctx.fill(p);
-          if (strokeW > 0) ctx.stroke(p);
+          drawCountry(id, strokeW);
         }
       } else {
         ctx.fillStyle = COLORS.land;
@@ -616,24 +680,17 @@
       for (let i = 0; i < state.features.length; i++) {
         const id = pad3(state.features[i].id);
         if (cull && !onScreen(id, t, PAD)) continue;
-        ctx.fillStyle = state.paint.get(id) || COLORS.land;
+        ctx.fillStyle = countryFill(id);   // same color decision blit's exposed ring uses
         ctx.fill(paths.get(id));
       }
       // one batched stroke pass over the whole world (cheap: a single stroke() call)
       if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landPath); }
     }
 
-    // 2) marked countries (usually 0-2) overpainted individually on top
+    // 2) marked countries (usually 0-2) overpainted individually on top, via the same
+    //    drawCountry routine (countryFill resolves each id's mark color) so nothing drifts.
     if (state.marks.size) {
-      ctx.lineWidth = strokeW;
-      ctx.strokeStyle = COLORS.landStroke;
-      for (const [id, mark] of state.marks) {
-        const p = paths.get(id);
-        if (!p) continue;
-        ctx.fillStyle = markFill(mark);
-        ctx.fill(p);
-        if (strokeW > 0) ctx.stroke(p);
-      }
+      for (const id of state.marks.keys()) drawCountry(id, strokeW);
     }
 
     // 3) country-name labels (browse mode) — drawn unscaled in screen space so
