@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v18";
+  const APP_VERSION = "v19";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -143,10 +143,13 @@
     paint: null,        // null | Map(padded id -> fill color) for mastery-colored land
     labels: false,      // draw country-name labels on the map
     labelData: [],      // [{name, cx, cy, w}] precomputed per fit
-    viewMode: "fit",    // "fit" | "focus" — how to re-frame after a resize
+    viewMode: "fit",    // "fit" | "focus" | "anchor" — how to re-frame after a resize
     viewFeature: null,  // the focused feature when viewMode === "focus"
-    preFocus: null,     // { t:{x,y,k}, gen } の視点 — アプリが自動フォーカスする直前の「ユーザーの視点」。
-                        // 次問でここへ巻き戻す。ユーザーが自分でパン/ズームすると破棄（gesture start）。
+    viewAnchor: null,   // { geo:[lon,lat], eff } — 巻き戻し先の地理アンカー（viewMode === "anchor"）。
+                        // リサイズ/再投影後も同じ視点へ再適用する（reapplyView）。
+    preFocus: null,     // { geo:[lon,lat], eff } の視点 — アプリが自動フォーカスする直前の「ユーザーの視点」。
+                        // 地理座標＋実効ズームで保持するので投影の作り直し（解説パネル開閉のリサイズ等）に
+                        // 不変。次問でここへ巻き戻す。ユーザーが自分でパン/ズームすると破棄（gesture start）。
   };
 
   let projection, geoPath, zoom;
@@ -513,6 +516,9 @@
       .on("start", (ev) => {
         if (ev.sourceEvent) {
           state.preFocus = null;   // the user grabbed the map → this view is theirs; nothing to roll back to
+          // Their own gesture ends anchor mode: a later resize should behave like a plain
+          // user-panned "fit" (resetZoom), not snap back to the old auto-focus anchor.
+          if (state.viewMode === "anchor") state.viewMode = "fit";
           fling.interrupted = false;
           stopFling(true);
           fling.t = 0;             // force trackFling to start sampling fresh
@@ -823,8 +829,29 @@
   // not overwrite the genuine user view. A user gesture clears preFocus (zoom "start").
   function savePreFocus() {
     if (state.preFocus) return;
+    if (!projection) return;
     const t = state.transform || d3.zoomIdentity;
-    state.preFocus = { t: { x: t.x, y: t.y, k: t.k }, gen: pathsGen };
+    // Geographic anchor: the world point currently under the screen center, plus the
+    // effective zoom (projection.scale()*k). invert() takes PRE-transform projection-plane
+    // coords — the on-screen center cssW/2 = t.x + t.k*X, so X = (cssW/2 - t.x)/t.k.
+    // Storing lon/lat instead of a raw transform makes rollback survive a reprojection
+    // (the explain panel open/close resizes map-stage → buildPaths), which is the bug fixed.
+    const inv = projection.invert([(cssW / 2 - t.x) / t.k, (cssH / 2 - t.y) / t.k]);
+    if (!inv || isNaN(inv[0]) || isNaN(inv[1])) return;   // unprojectable → keep view (no rollback)
+    state.preFocus = { geo: inv, eff: projection.scale() * t.k };
+  }
+
+  // Rebuild a zoom transform that puts a geographic anchor back at the screen center at its
+  // saved effective zoom, using the CURRENT projection/size. Returns null when the anchor
+  // does not project (NaN) so callers can fall back to a region fit.
+  function anchorTransform(anchor) {
+    if (!projection || !anchor) return null;
+    const k = Math.max(1, Math.min(14, anchor.eff / projection.scale()));   // scaleExtent bounds
+    const p = projection(anchor.geo);
+    if (!p || isNaN(p[0]) || isNaN(p[1])) return null;
+    const tx = cssW / 2 - k * p[0];
+    const ty = cssH / 2 - k * p[1];
+    return d3.zoomIdentity.translate(tx, ty).scale(k);
   }
 
   // Gesture frame: instead of re-drawing 182 paths, slide/scale the last sharp frame.
@@ -1110,6 +1137,7 @@
     state.fittedFeatures = features;
     state.preFocus = null;         // reframing the projection voids any pending auto-focus rollback
     state.viewMode = "fit";
+    state.viewAnchor = null;       // a fresh fit clears any geographic rollback anchor
     resizeCanvas();
     const fc = { type: "FeatureCollection", features };
     projection.fitExtent([[20, 20], [cssW - 20, cssH - 20]], fc);
@@ -1167,6 +1195,15 @@
 
   function reapplyView() {
     if (state.viewMode === "focus" && state.viewFeature) applyFocus(state.viewFeature, false);
+    else if (state.viewMode === "anchor" && state.viewAnchor) {
+      // Re-apply the rolled-back geographic view non-animated (instant follow on resize).
+      // This is the core of the fix: closing the explain panel resizes map-stage →
+      // relayout → syncSizeNow (reproject) → reapplyView, and the anchor re-derives the
+      // SAME view under the new projection instead of the stale transform being lost.
+      const tr = anchorTransform(state.viewAnchor);
+      if (tr) canvasSel.call(zoom.transform, tr);
+      else resetZoom(false);
+    }
     else resetZoom(false);
   }
 
@@ -1420,16 +1457,18 @@
     // NAME mode re-frames itself via focusFeature every question, so it is left untouched.
     if (state.settings.mode === "find" || state.settings.mode === "explore") {
       if (state.preFocus) {
-        if (state.preFocus.gen === pathsGen) {
-          const p = state.preFocus.t;
-          const tr = d3.zoomIdentity.translate(p.x, p.y).scale(p.k);
-          state.viewMode = "fit";        // rolled back to the (fit-era) user view; no focused feature
+        const tr = anchorTransform(state.preFocus);
+        if (tr) {
+          // Enter "anchor" view: the geographic anchor survives later reprojections (the
+          // explain-panel-close resize), so reapplyView keeps re-deriving this same view
+          // instead of the old gen-mismatch fallback that re-fit to the whole region.
+          state.viewMode = "anchor";
+          state.viewAnchor = state.preFocus;
           state.viewFeature = null;
           beginTransition();             // glide back via blit
           canvasSel.transition().duration(400).call(zoom.transform, tr);
         } else {
-          // Projection changed under us (resize/rotate): the saved transform no longer maps,
-          // so fall back to a fresh region fit like the old behavior.
+          // Anchor does not project (degenerate): fall back to a fresh region fit.
           fitToFeatures(state.fittedFeatures || state.features, true);
         }
         state.preFocus = null;
