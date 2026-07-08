@@ -361,10 +361,25 @@
     const geo = topojson.feature(topo, topo.objects.countries);
     state.features = [];
     state.byId.clear();
+    const polysOf = (g) => (g.type === "Polygon" ? [g.coordinates] : g.coordinates);
     geo.features.forEach((f) => {
       if (f.id == null) return;
       if (!dataFor(f.id)) return;           // keep only countries we have JP names for
-      state.byId.set(pad3(f.id), f);
+      const id = pad3(f.id);
+      const prev = state.byId.get(id);
+      if (prev) {
+        // The 50m atlas can carry one ISO id as several geometries (036 is both
+        // "Australia" and "Ashmore and Cartier Is."). Every downstream cache —
+        // paths, boundsMap, centroids, hit testing — is keyed by id, so a second
+        // feature would silently REPLACE the first (this made mainland Australia
+        // vanish under culling). Merge them into one MultiPolygon instead.
+        prev.geometry = {
+          type: "MultiPolygon",
+          coordinates: polysOf(prev.geometry).concat(polysOf(f.geometry)),
+        };
+        return;
+      }
+      state.byId.set(id, f);
       state.features.push(f);
     });
     // Distractor source: every renderable country, independent of the current region filter.
