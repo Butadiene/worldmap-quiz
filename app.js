@@ -5,6 +5,7 @@
   "use strict";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+  const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
 
   const REGION_LABEL = {
     all: "世界全体", asia: "アジア", europe: "ヨーロッパ", africa: "アフリカ",
@@ -151,10 +152,22 @@
   // projection every frame. buildPaths() reprojects all countries into Path2D objects
   // once per fit; render() and featureAt() then just replay those under the transform.
   let pathGen = null;              // Path2D-backed d3.geoPath, kept OFF the ctx-bound geoPath
-  const paths = new Map();         // padded id -> Path2D (projected outline)
+  const paths = new Map();         // padded id -> Path2D (projected outline, 50m 高詳細)
   let landPath = null;             // every country in one Path2D (batched fill/stroke)
   let inertPath = null;            // id なしジオメトリを1本にまとめた Path2D (最下層の無反応な陸)
   const boundsMap = new Map();     // padded id -> [[x0,y0],[x1,y1]] projected bbox (culling)
+  // LOD (Run 13): a parallel LOW-detail path set built from the coarse 110m atlas. Used
+  // only when zoomed out (effScale < DETAIL_SCALE) where 50m's extra vertices are sub-pixel
+  // waste. Draw-layer only — none of it touches state.features / pool / centroids / ADJ.
+  let lowById = null;              // padded id -> merged 110m feature (null until 110m loads)
+  let lowInert = [];               // 110m の id なしジオメトリ (無ければ 50m の inert を流用)
+  let lowPending = false;          // a 110m fetch is in flight (guards retry double-fetch)
+  const pathsLow = new Map();      // padded id -> low-detail Path2D (falls back to 50m per id)
+  let landPathLow = null;          // low-detail batched land Path2D
+  let inertPathLow = null;         // low-detail inert Path2D (or the 50m inertPath when 110m has none)
+  // effScale = projection.scale()*t.k. World fit ≈ 70, region fits (Europe 等) ≈ 300.
+  // Below 180 we're at the world view or its zoom-in ramp → low detail; region views stay 50m.
+  const DETAIL_SCALE = 180;
   const geoCentroids = new Map();  // padded id -> [lon,lat] spherical centroid (たんけん距離計算)
   const projCentroids = new Map(); // padded id -> [x,y] projected-plane centroid (世界一周の経路線); rebuilt with paths
   const ADJ = new Map();           // padded id -> Set(padded id) 隣接グラフ (陸国境 topojson.neighbors + 海路 SEA_LINKS)
@@ -357,6 +370,53 @@
         els.loading.hidden = true;
         els.error.hidden = false;
       });
+    // LOD: pull the coarse 110m atlas in parallel. This NEVER blocks or fails the app —
+    // its own promise chain, and every selector falls back to 50m when it is missing.
+    loadLowDetail();
+  }
+
+  // Fetch + ingest the 110m atlas for the low-detail LOD path set. Best-effort: any
+  // failure/late arrival just leaves LOD off (50m everywhere). Idempotent across retries.
+  function loadLowDetail() {
+    if (lowById || lowPending) return;
+    lowPending = true;
+    fetch(WORLD_URL_LOW)
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then((topo) => {
+        ingestLowTopo(topo);
+        lowPending = false;
+        // If the 50m map is already up, rebuild the caches so LOD kicks in immediately.
+        if (lowById && projection) { buildPaths(); render(); }
+      })
+      .catch((err) => { lowPending = false; console.warn("LOD (110m) load skipped:", err); });
+  }
+
+  // Extract the 110m topology into a merged id->feature map + inert list ONCE (same
+  // merge rules as buildFeatures). Kept in module scope and reprojected by buildPaths on
+  // every fit; state.features etc. are never touched. Only ids present in COUNTRY_DATA.
+  function ingestLowTopo(topo) {
+    try {
+      const geo = topojson.feature(topo, topo.objects.countries);
+      const byId = new Map();
+      const inert = [];
+      const polysOf = (g) => (g.type === "Polygon" ? [g.coordinates] : g.coordinates);
+      geo.features.forEach((f) => {
+        if (f.id == null) { inert.push(f); return; }
+        if (!dataFor(f.id)) return;
+        const id = pad3(f.id);
+        const prev = byId.get(id);
+        if (prev) {
+          prev.geometry = {
+            type: "MultiPolygon",
+            coordinates: polysOf(prev.geometry).concat(polysOf(f.geometry)),
+          };
+          return;
+        }
+        byId.set(id, f);
+      });
+      lowById = byId;
+      lowInert = inert;
+    } catch (e) { lowById = null; lowInert = []; }
   }
 
   function buildFeatures(topo) {
@@ -599,7 +659,7 @@
   // Shared by render()'s individual passes and blit()'s exposed-ring redraw so the
   // two paths stay pixel-identical.
   function drawCountry(id, strokeW) {
-    const p = paths.get(id);
+    const p = activePaths().get(id);   // LOD: same path set render/blit/featureAt agree on
     if (!p) return;
     ctx.fillStyle = countryFill(id);
     ctx.fill(p);
@@ -609,6 +669,19 @@
       ctx.stroke(p);
     }
   }
+
+  // LOD selectors — ONE decision, shared by render(), blit()'s exposed-ring draw and
+  // featureAt() so the drawn pixels and the hit-test always use the SAME path set (the
+  // pixel-exact tap invariant). Low detail only when 110m is loaded AND we are zoomed out
+  // past DETAIL_SCALE; otherwise (or when 110m never arrived) always the 50m set.
+  function useLow() {
+    if (!lowById || !landPathLow || !projection) return false;
+    const t = state.transform || d3.zoomIdentity;
+    return projection.scale() * t.k < DETAIL_SCALE;
+  }
+  const activePaths = () => (useLow() ? pathsLow : paths);
+  const activeLand = () => (useLow() ? landPathLow : landPath);
+  const activeInert = () => (useLow() ? inertPathLow : inertPath);
 
   // Reproject every country into a cached Path2D. Called once after each projection
   // change (fitToFeatures / syncSizeNow) — the ONLY places projection.fitExtent runs —
@@ -640,17 +713,61 @@
       pathGen.context(landPath);
       pathGen(f);
     }
+    buildLowPaths();               // LOD low-detail set, reprojected with the same pathGen
   }
 
-  // Does a country's projected bbox fall within the padded viewport under transform t?
-  // Screen(CSS) pos of a world point (x,y) is (t.x + t.k*x, t.y + t.k*y); we test the
-  // bbox corners against [−pad, cssW+pad] × [−pad, cssH+pad]. Cheap enough for 182×frame.
-  function onScreen(id, t, pad) {
+  // Build the LOW-detail (110m) path set under the SAME projection as the 50m set above,
+  // so the two line up when the LOD threshold is crossed. Keyed by the SAME id list
+  // (state.features): countries missing from 110m — e.g. the 12 island nations only in
+  // 50m — reuse their 50m Path2D (negligible at the world zoom where low detail runs).
+  // No state / boundsMap / centroids touched: culling reuses the 50m boundsMap (bounds
+  // differ sub-pixel between the two atlases, harmless for a 50px-padded viewport test).
+  function buildLowPaths() {
+    if (!lowById) return;          // 110m not (yet) available → LOD stays off, selectors use 50m
+    pathsLow.clear();
+    landPathLow = new Path2D();
+    // inert: prefer 110m's own id-less geometries; fall back to the 50m inertPath Path2D.
+    if (lowInert.length) {
+      inertPathLow = new Path2D();
+      pathGen.context(inertPathLow);
+      for (let i = 0; i < lowInert.length; i++) pathGen(lowInert[i]);
+    } else {
+      inertPathLow = inertPath;
+    }
+    for (let i = 0; i < state.features.length; i++) {
+      const id = pad3(state.features[i].id);
+      const lf = lowById.get(id);
+      if (lf) {
+        const p = new Path2D();
+        pathGen.context(p);
+        pathGen(lf);
+        pathsLow.set(id, p);
+        pathGen.context(landPathLow);
+        pathGen(lf);
+      } else {
+        // absent from 110m: reuse the 50m outline (already built in the loop above) and
+        // stream the 50m feature into the batched low land path.
+        pathsLow.set(id, paths.get(id));
+        pathGen.context(landPathLow);
+        pathGen(state.byId.get(id));
+      }
+    }
+  }
+
+  // Does a country's projected bbox meet an arbitrary CSS rect [x0,y0,x1,y1] (expanded by
+  // pad)? Screen(CSS) pos of a world point (x,y) is (t.x + t.k*x, t.y + t.k*y); we test the
+  // bbox corners against the padded rect. Cheap enough for 182×frame. Shared by the viewport
+  // cull (onScreen) and blit's exposed-band selection (Run 13).
+  function bboxIntersects(id, t, rect, pad) {
     const b = boundsMap.get(id);
     if (!b) return true;
     const x0 = t.x + t.k * b[0][0], y0 = t.y + t.k * b[0][1];
     const x1 = t.x + t.k * b[1][0], y1 = t.y + t.k * b[1][1];
-    return !(x1 < -pad || x0 > cssW + pad || y1 < -pad || y0 > cssH + pad);
+    return !(x1 < rect[0] - pad || x0 > rect[2] + pad || y1 < rect[1] - pad || y0 > rect[3] + pad);
+  }
+  // Viewport cull: is the country within the padded screen box? (the whole-viewport case)
+  function onScreen(id, t, pad) {
+    return bboxIntersects(id, t, [0, 0, cssW, cssH], pad);
   }
 
   // Copy the current (sharp) canvas into an offscreen buffer for gesture blitting.
@@ -717,6 +834,20 @@
     // Partial cover: live-draw only the exposed region (viewport − R) with the SAME
     // per-country routine render() uses, so revealed land matches exactly. An evenodd
     // clip of viewport ⊕ R isolates the exposed ring; the transfer above keeps R itself.
+    //
+    // Run 13-A: the country selection tests bboxes against the EXPOSED BANDS, not the whole
+    // viewport. The exposed region = viewport − (R∩viewport) is at most 4 rectangles (top /
+    // bottom / left / right remainders around the covered area). On a normal pan the bands
+    // are thin, so only a handful of countries stream instead of the whole on-screen set
+    // (the clip already discarded their pixels, but the Path2D walk was still paying full price).
+    const Ix0 = Math.max(0, offsetX), Iy0 = Math.max(0, offsetY);
+    const Ix1 = Math.min(cssW, offsetX + Rw), Iy1 = Math.min(cssH, offsetY + Rh);
+    const bands = [];                              // [x0,y0,x1,y1] CSS rects, ≥0.5px each
+    if (Iy0 > 0.5) bands.push([0, 0, cssW, Iy0]);              // top strip (above cover)
+    if (cssH - Iy1 > 0.5) bands.push([0, Iy1, cssW, cssH]);    // bottom strip
+    if (Ix0 > 0.5) bands.push([0, Iy0, Ix0, Iy1]);            // left strip (beside cover)
+    if (cssW - Ix1 > 0.5) bands.push([Ix1, Iy0, cssW, Iy1]);  // right strip
+
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const clip = new Path2D();
@@ -727,17 +858,19 @@
     ctx.scale(t.k, t.k);
     ctx.lineJoin = "round";
     const strokeW = 0.7 / t.k;            // same constant on-screen border as render()
+    const inertP = activeInert();         // LOD: same detail level render() uses this frame
     // inert land first (as render step 0) so the exposed ring has no海色の穴 either.
-    if (inertPath) {
+    if (inertP) {
       ctx.fillStyle = COLORS.land;
-      ctx.fill(inertPath);
-      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(inertPath); }
+      ctx.fill(inertP);
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(inertP); }
     }
-    // Only viewport-intersecting countries; the clip discards anything outside the ring.
+    // Only countries whose screen bbox meets an exposed band; the clip discards the rest.
     for (let i = 0; i < state.features.length; i++) {
       const id = pad3(state.features[i].id);
-      if (!onScreen(id, t, 50)) continue;
-      drawCountry(id, strokeW);
+      let vis = false;
+      for (let b = 0; b < bands.length; b++) { if (bboxIntersects(id, t, bands[b], 2)) { vis = true; break; } }
+      if (vis) drawCountry(id, strokeW);
     }
     ctx.restore();
   }
@@ -765,12 +898,16 @@
     const cull = t.k > 1.2;
     const PAD = 50;
 
+    // LOD: pick the low- or high-detail path set ONCE for the whole frame (drawCountry
+    // reads the same selector, so batched and per-country passes never mix detail levels).
+    const inertP = activeInert(), landP = activeLand();
+
     // 0) id なしジオメトリを「無反応の陸地」として最下層に。各国の塗り(ステップ1)が上に乗る。
     //    5ジオメトリだけなので paint/cull のどちらの分岐でも常に一括1回で描く（カリング不要）。
-    if (inertPath) {
+    if (inertP) {
       ctx.fillStyle = COLORS.land;
-      ctx.fill(inertPath);
-      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(inertPath); }
+      ctx.fill(inertP);
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(inertP); }
     }
 
     // 1) unmarked land. Normally the whole world as one batched fill/stroke; in
@@ -785,18 +922,19 @@
         }
       } else {
         ctx.fillStyle = COLORS.land;
-        ctx.fill(landPath);
-        if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landPath); }
+        ctx.fill(landP);
+        if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landP); }
       }
     } else {
+      const pset = activePaths();
       for (let i = 0; i < state.features.length; i++) {
         const id = pad3(state.features[i].id);
         if (cull && !onScreen(id, t, PAD)) continue;
         ctx.fillStyle = countryFill(id);   // same color decision blit's exposed ring uses
-        ctx.fill(paths.get(id));
+        ctx.fill(pset.get(id));
       }
       // one batched stroke pass over the whole world (cheap: a single stroke() call)
-      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landPath); }
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(landP); }
     }
 
     // 2) marked countries (usually 0-2) overpainted individually on top, via the same
@@ -1610,10 +1748,11 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.translate(t.x, t.y);
     ctx.scale(t.k, t.k);
+    const pset = activePaths();   // LOD: hit-test the SAME path set on screen this frame
     let hit = null;
     for (let i = 0; i < state.features.length; i++) {
       const f = state.features[i];
-      const p = paths.get(pad3(f.id));
+      const p = pset.get(pad3(f.id));
       if (p && ctx.isPointInPath(p, px, py)) { hit = f; break; }
     }
     // Near-miss fallback: if the tap landed on ocean but a country's border is
@@ -1626,7 +1765,7 @@
       let bestArea = Infinity;
       for (let i = 0; i < state.features.length; i++) {
         const f = state.features[i];
-        const p = paths.get(pad3(f.id));
+        const p = pset.get(pad3(f.id));
         if (p && ctx.isPointInStroke(p, px, py)) {
           const a = geoPath.area(f);
           if (a < bestArea) { bestArea = a; hit = f; }
