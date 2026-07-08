@@ -4,6 +4,10 @@
 (function () {
   "use strict";
 
+  // Shown on the setup screen so on-device users can confirm an update landed.
+  // MUST be bumped together with CACHE in sw.js (same version number).
+  const APP_VERSION = "v18";
+
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
 
@@ -335,6 +339,8 @@
      ============================================================ */
   function init() {
     readColors();
+    const ver = $("app-version");
+    if (ver) ver.textContent = APP_VERSION;
     state.stats = store.get(STATS_KEY, {});
     // Guard against a corrupted / hand-edited store (array, string, null…): stats must be a plain object.
     if (!state.stats || typeof state.stats !== "object" || Array.isArray(state.stats)) state.stats = {};

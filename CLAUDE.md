@@ -16,7 +16,7 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 There is no build, lint, or test tooling. Edit the files and reload the browser.
 
-**When changing any local asset, bump the cache version** `CACHE = "worldquiz-vN"` in `sw.js` — otherwise returning users keep the old cached files (the SW serves cache-first). Also add any new local file to the `LOCAL_ASSETS` array in `sw.js`, and any new CDN URL to both `CDN_ASSETS` (sw.js) and the `<script>` tags / fetch URL in the app.
+**When changing any local asset, bump the cache version** `CACHE = "worldquiz-vN"` in `sw.js` **and the matching `APP_VERSION = "vN"` in `app.js`** (shown on the setup screen so users can confirm an update landed) — otherwise returning users keep the old cached files (the SW serves cache-first). Also add any new local file to the `LOCAL_ASSETS` array in `sw.js`, and any new CDN URL to both `CDN_ASSETS` (sw.js) and the `<script>` tags / fetch URL in the app.
 
 ## Architecture
 

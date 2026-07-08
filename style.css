@@ -338,6 +338,7 @@ body {
 .setup-foot { text-align: center; font-size: 12px; color: var(--ink-faint); margin: 16px 0 0; }
 .setup-foot.online { color: var(--correct); }
 .setup-foot.offline { color: var(--ink-faint); }
+.setup-version { text-align: center; font-size: 10px; color: var(--ink-faint); opacity: .7; margin: 4px 0 0; }
 
 /* ===== Result screen ===== */
 .result-eyebrow { color: var(--primary); font-weight: 800; font-size: 12px; letter-spacing: .14em; margin: 0 0 14px; text-align: center; }
