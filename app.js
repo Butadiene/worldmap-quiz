@@ -103,6 +103,7 @@
   // ---- state ----
   const state = {
     features: [],       // renderable GeoJSON features that have Japanese data
+    inertFeatures: [],  // id なしジオメトリ (Somaliland/Kosovo/N.Cyprus 等): 陸として描くだけの無反応領域
     byId: new Map(),    // padded id -> feature
     allCountries: [],   // {id, ja, region, feature} for every renderable country (distractor source)
     pool: [],           // {id, ja, region, feature} for current settings
@@ -152,6 +153,7 @@
   let pathGen = null;              // Path2D-backed d3.geoPath, kept OFF the ctx-bound geoPath
   const paths = new Map();         // padded id -> Path2D (projected outline)
   let landPath = null;             // every country in one Path2D (batched fill/stroke)
+  let inertPath = null;            // id なしジオメトリを1本にまとめた Path2D (最下層の無反応な陸)
   const boundsMap = new Map();     // padded id -> [[x0,y0],[x1,y1]] projected bbox (culling)
   const geoCentroids = new Map();  // padded id -> [lon,lat] spherical centroid (たんけん距離計算)
   const projCentroids = new Map(); // padded id -> [x,y] projected-plane centroid (世界一周の経路線); rebuilt with paths
@@ -360,10 +362,14 @@
   function buildFeatures(topo) {
     const geo = topojson.feature(topo, topo.objects.countries);
     state.features = [];
+    state.inertFeatures = [];
     state.byId.clear();
     const polysOf = (g) => (g.type === "Polygon" ? [g.coordinates] : g.coordinates);
     geo.features.forEach((f) => {
-      if (f.id == null) return;
+      // id なしジオメトリ (50m データの Somaliland/Kosovo/N. Cyprus/Indian Ocean Ter./Siachen
+      // Glacier) は捨てず、見た目だけ普通の陸として描く無反応領域として収集する。pool/paths/
+      // hit-test/centroid/ADJ には一切入れない（id 付きで COUNTRY_DATA に無い海外領土は従来どおりスキップ）。
+      if (f.id == null) { state.inertFeatures.push(f); return; }
       if (!dataFor(f.id)) return;           // keep only countries we have JP names for
       const id = pad3(f.id);
       const prev = state.byId.get(id);
@@ -616,6 +622,10 @@
     boundsMap.clear();
     projCentroids.clear();
     landPath = new Path2D();
+    // id なしジオメトリを1本の Path2D にまとめる（landPath と同じ手法で投影に追随）。
+    inertPath = new Path2D();
+    pathGen.context(inertPath);
+    for (let i = 0; i < state.inertFeatures.length; i++) pathGen(state.inertFeatures[i]);
     for (let i = 0; i < state.features.length; i++) {
       const f = state.features[i];
       const id = pad3(f.id);
@@ -717,6 +727,12 @@
     ctx.scale(t.k, t.k);
     ctx.lineJoin = "round";
     const strokeW = 0.7 / t.k;            // same constant on-screen border as render()
+    // inert land first (as render step 0) so the exposed ring has no海色の穴 either.
+    if (inertPath) {
+      ctx.fillStyle = COLORS.land;
+      ctx.fill(inertPath);
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(inertPath); }
+    }
     // Only viewport-intersecting countries; the clip discards anything outside the ring.
     for (let i = 0; i < state.features.length; i++) {
       const id = pad3(state.features[i].id);
@@ -748,6 +764,14 @@
     // view (k<=1.2) everything is visible, so the batched landPath is faster.
     const cull = t.k > 1.2;
     const PAD = 50;
+
+    // 0) id なしジオメトリを「無反応の陸地」として最下層に。各国の塗り(ステップ1)が上に乗る。
+    //    5ジオメトリだけなので paint/cull のどちらの分岐でも常に一括1回で描く（カリング不要）。
+    if (inertPath) {
+      ctx.fillStyle = COLORS.land;
+      ctx.fill(inertPath);
+      if (strokeW > 0) { ctx.lineWidth = strokeW; ctx.strokeStyle = COLORS.landStroke; ctx.stroke(inertPath); }
+    }
 
     // 1) unmarked land. Normally the whole world as one batched fill/stroke; in
     //    成績マップ mode each country fills with its own bucket color.
