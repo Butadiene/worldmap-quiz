@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v19";
+  const APP_VERSION = "v20";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -512,7 +512,7 @@
     resizeCanvas();
 
     zoom = d3.zoom()
-      .scaleExtent([1, 14])
+      .scaleExtent([1, 100])
       .on("start", (ev) => {
         if (ev.sourceEvent) {
           state.preFocus = null;   // the user grabbed the map → this view is theirs; nothing to roll back to
@@ -824,21 +824,27 @@
     captureSnap();
   }
 
+  // The current on-screen view as a reprojection-proof geographic anchor: the world point
+  // under the screen center plus the effective zoom (projection.scale()*k). invert() takes
+  // PRE-transform projection-plane coords — the on-screen center cssW/2 = t.x + t.k*X, so
+  // X = (cssW/2 - t.x)/t.k. Storing lon/lat instead of a raw transform makes the view
+  // survive a reprojection (the explain panel open/close resizes map-stage → buildPaths).
+  // Returns null when the center does not unproject (NaN) so callers can bail cleanly.
+  function currentViewAnchor() {
+    if (!projection) return null;
+    const t = state.transform || d3.zoomIdentity;
+    const inv = projection.invert([(cssW / 2 - t.x) / t.k, (cssH / 2 - t.y) / t.k]);
+    if (!inv || isNaN(inv[0]) || isNaN(inv[1])) return null;
+    return { geo: inv, eff: projection.scale() * t.k };
+  }
+
   // Remember the pre-auto-focus view so nextQuestion can roll back to it. Only the FIRST
   // auto-focus of a turn is recorded — a later focus (e.g. explain after a wrong find) must
   // not overwrite the genuine user view. A user gesture clears preFocus (zoom "start").
   function savePreFocus() {
     if (state.preFocus) return;
-    if (!projection) return;
-    const t = state.transform || d3.zoomIdentity;
-    // Geographic anchor: the world point currently under the screen center, plus the
-    // effective zoom (projection.scale()*k). invert() takes PRE-transform projection-plane
-    // coords — the on-screen center cssW/2 = t.x + t.k*X, so X = (cssW/2 - t.x)/t.k.
-    // Storing lon/lat instead of a raw transform makes rollback survive a reprojection
-    // (the explain panel open/close resizes map-stage → buildPaths), which is the bug fixed.
-    const inv = projection.invert([(cssW / 2 - t.x) / t.k, (cssH / 2 - t.y) / t.k]);
-    if (!inv || isNaN(inv[0]) || isNaN(inv[1])) return;   // unprojectable → keep view (no rollback)
-    state.preFocus = { geo: inv, eff: projection.scale() * t.k };
+    const anchor = currentViewAnchor();
+    if (anchor) state.preFocus = anchor;   // unprojectable center → keep view (no rollback)
   }
 
   // Rebuild a zoom transform that puts a geographic anchor back at the screen center at its
@@ -846,7 +852,7 @@
   // does not project (NaN) so callers can fall back to a region fit.
   function anchorTransform(anchor) {
     if (!projection || !anchor) return null;
-    const k = Math.max(1, Math.min(14, anchor.eff / projection.scale()));   // scaleExtent bounds
+    const k = Math.max(1, Math.min(100, anchor.eff / projection.scale()));   // scaleExtent bounds
     const p = projection(anchor.geo);
     if (!p || isNaN(p[0]) || isNaN(p[1])) return null;
     const tx = cssW / 2 - k * p[0];
@@ -1155,7 +1161,17 @@
   function focusFeature(f, animate) {
     state.viewMode = "focus";
     state.viewFeature = f;
-    syncSizeNow();                 // ensure projection matches the current box
+    const before = currentViewAnchor();   // the current view under the OLD projection
+    if (syncSizeNow() && before) {
+      // The projection was just rebuilt (e.g. the explain panel resized map-stage).
+      // state.transform still describes the old projection, so reconstruct the same
+      // geographic view under the new one INSTANTLY before the focus glide begins —
+      // otherwise the first frame is "old transform × new projection", a different
+      // place, and the glide starts from there (the reported jump). Non-animated apply;
+      // snap falls back to a full render on gen mismatch, which is correct here.
+      const tr = anchorTransform(before);
+      if (tr) canvasSel.call(zoom.transform, tr);
+    }
     applyFocus(f, animate !== false);
   }
   function applyFocus(f, animate) {
@@ -1164,7 +1180,7 @@
     const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
     const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
     let scale = 0.55 / Math.max(dx / cssW, dy / cssH);
-    scale = Math.max(1, Math.min(14, scale));   // cap = zoom scaleExtent upper bound
+    scale = Math.max(1, Math.min(60, scale));   // deep enough for tiny islands; stays under scaleExtent's 100
     const tx = cssW / 2 - scale * cx, ty = cssH / 2 - scale * cy;
     const tr = d3.zoomIdentity.translate(tx, ty).scale(scale);
     if (animate) beginTransition();   // blit the focus glide instead of re-rendering every frame
