@@ -141,6 +141,8 @@
     labelData: [],      // [{name, cx, cy, w}] precomputed per fit
     viewMode: "fit",    // "fit" | "focus" — how to re-frame after a resize
     viewFeature: null,  // the focused feature when viewMode === "focus"
+    preFocus: null,     // { t:{x,y,k}, gen } の視点 — アプリが自動フォーカスする直前の「ユーザーの視点」。
+                        // 次問でここへ巻き戻す。ユーザーが自分でパン/ズームすると破棄（gesture start）。
   };
 
   let projection, geoPath, zoom;
@@ -152,6 +154,8 @@
   // projection every frame. buildPaths() reprojects all countries into Path2D objects
   // once per fit; render() and featureAt() then just replay those under the transform.
   let pathGen = null;              // Path2D-backed d3.geoPath, kept OFF the ctx-bound geoPath
+  let pathsGen = 0;                // projection-generation counter: bumped by buildPaths() so a
+                                   // snapshot captured under an OLD projection is discarded, not blitted
   const paths = new Map();         // padded id -> Path2D (projected outline, 50m 高詳細)
   let landPath = null;             // every country in one Path2D (batched fill/stroke)
   let inertPath = null;            // id なしジオメトリを1本にまとめた Path2D (最下層の無反応な陸)
@@ -171,9 +175,13 @@
   const geoCentroids = new Map();  // padded id -> [lon,lat] spherical centroid (たんけん距離計算)
   const projCentroids = new Map(); // padded id -> [x,y] projected-plane centroid (世界一周の経路線); rebuilt with paths
   const ADJ = new Map();           // padded id -> Set(padded id) 隣接グラフ (陸国境 topojson.neighbors + 海路 SEA_LINKS)
-  // Gesture blit snapshot: the last sharp frame + the transform it was drawn at.
+  // Gesture / transition blit snapshot: the last sharp frame + the transform + projection
+  // generation it was drawn at (stale gen ⇒ discard, never blit).
   let snapCanvas = null;           // reused offscreen backing buffer
-  let snap = null;                 // { canvas, t0:{x,y,k} } while a gesture snapshot is live
+  let snap = null;                 // { canvas, t0:{x,y,k}, gen } while a snapshot is live
+  let transitioning = false;       // a programmatic zoom transition is animating (blit-driven).
+                                   // The name-mode pulse pauses its render()s while true so it
+                                   // doesn't fight the transition's blits; always cleared at zoom "end".
   // Cap the backing-store resolution: 3x phones would otherwise push ~2.25x the pixels
   // of a 2x panel for no visible gain. All canvas sizing goes through this.
   const deviceRatio = () => Math.min(window.devicePixelRatio || 1, 2);
@@ -498,6 +506,7 @@
       .scaleExtent([1, 14])
       .on("start", (ev) => {
         if (ev.sourceEvent) {
+          state.preFocus = null;   // the user grabbed the map → this view is theirs; nothing to roll back to
           fling.interrupted = false;
           stopFling(true);
           fling.t = 0;             // force trackFling to start sampling fresh
@@ -507,18 +516,21 @@
       .on("zoom", (ev) => {
         state.transform = ev.transform;
         if (ev.sourceEvent) trackFling(ev.transform);
-        // During a gesture (finger pan/pinch OR an inertial fling step) blit the
-        // frozen frame; otherwise (programmatic transforms, zoom buttons, fits) do a
-        // full sharp render. fling steps are programmatic, so fling.raf is the tell.
-        const gesturing = !!ev.sourceEvent || fling.raf;
-        if (gesturing && snap) blit();
+        // Blit whenever a valid (same-projection) snapshot exists: finger pans/pinches,
+        // inertial fling steps AND programmatic transition ticks (focusFeature / zoom
+        // buttons / the auto-focus rollback) all glide by transferring the frozen frame.
+        // A fit rebuilds the projection (pathsGen++), so its snapshot is stale → full render.
+        if (snap && snap.gen === pathsGen) blit();
         else render();
       })
       .on("end", (ev) => {
+        transitioning = false;     // any programmatic transition is over; let the pulse redraw again
         // Starting a fling keeps blitting (its steps re-enter the zoom handler);
-        // startFling() itself calls render() when it decides NOT to glide, so a
-        // released gesture always terminates on a sharp frame.
+        // startFling() itself calls render() when it decides NOT to glide, so a released
+        // gesture always terminates on a sharp frame. Programmatic transitions (focus /
+        // buttons / rollback) — and any interrupted transition — land their sharp frame here.
         if (ev.sourceEvent) startFling();
+        else render();
       });
     canvasSel.call(zoom);
     state.transform = d3.zoomIdentity;
@@ -538,8 +550,8 @@
     }
 
     // zoom buttons
-    els.zoomIn.onclick = () => canvasSel.transition().duration(250).call(zoom.scaleBy, 1.6);
-    els.zoomOut.onclick = () => canvasSel.transition().duration(250).call(zoom.scaleBy, 1 / 1.6);
+    els.zoomIn.onclick = () => { beginTransition(); canvasSel.transition().duration(250).call(zoom.scaleBy, 1.6); };
+    els.zoomOut.onclick = () => { beginTransition(); canvasSel.transition().duration(250).call(zoom.scaleBy, 1 / 1.6); };
     els.zoomReset.onclick = () => fitToFeatures(state.fittedFeatures || state.features, true);
   }
 
@@ -690,6 +702,7 @@
   // its context) is never repointed at a Path2D.
   function buildPaths() {
     if (!projection) return;
+    pathsGen++;                    // new projection generation: any live snapshot is now stale
     if (!pathGen) pathGen = d3.geoPath(projection);   // NOT ctx-bound; feeds Path2D contexts
     paths.clear();
     boundsMap.clear();
@@ -785,7 +798,27 @@
     sctx.clearRect(0, 0, snapCanvas.width, snapCanvas.height);
     sctx.drawImage(canvas, 0, 0);
     const tr = state.transform || d3.zoomIdentity;
-    snap = { canvas: snapCanvas, t0: { x: tr.x, y: tr.y, k: tr.k } };
+    snap = { canvas: snapCanvas, t0: { x: tr.x, y: tr.y, k: tr.k }, gen: pathsGen };
+  }
+
+  // Begin a programmatic zoom transition (focusFeature / zoom buttons / auto-focus rollback):
+  // mark it transitioning so the pulse steps aside, force one sharp render so the frozen frame
+  // matches the current projection (captureSnap assumes a sharp canvas — after a syncSizeNow
+  // reproject or mid-interrupt the live canvas may be stale/soft), then snapshot it. The
+  // transition's ticks then blit that frame; zoom "end" restores a sharp render + clears the flag.
+  function beginTransition() {
+    transitioning = true;
+    render();
+    captureSnap();
+  }
+
+  // Remember the pre-auto-focus view so nextQuestion can roll back to it. Only the FIRST
+  // auto-focus of a turn is recorded — a later focus (e.g. explain after a wrong find) must
+  // not overwrite the genuine user view. A user gesture clears preFocus (zoom "start").
+  function savePreFocus() {
+    if (state.preFocus) return;
+    const t = state.transform || d3.zoomIdentity;
+    state.preFocus = { t: { x: t.x, y: t.y, k: t.k }, gen: pathsGen };
   }
 
   // Gesture frame: instead of re-drawing 182 paths, slide/scale the last sharp frame.
@@ -795,7 +828,7 @@
   //   A = t.x − r*t0.x   →   A + r*s0 = (t.x − r·t0.x) + r·(t0.x + t0.k·p) = t.x + t.k·p = s ✓
   // So translate by A then scale by r maps every snapshot pixel to its live position.
   function blit() {
-    if (!snap) { render(); return; }
+    if (!snap || snap.gen !== pathsGen) { render(); return; }   // stale projection ⇒ never blit
     const t = state.transform || d3.zoomIdentity;
     const r = t.k / snap.t0.k;
     const offsetX = t.x - r * snap.t0.x;
@@ -811,12 +844,13 @@
     const ih = Math.max(0, Math.min(cssH, offsetY + Rh) - Math.max(0, offsetY));
     const coverRatio = (iw * ih) / (cssW * cssH || 1);
 
-    // Too little of the frozen frame is left (fast fling / big pinch-out): the exposed
-    // ring would be most of the screen, so just re-render sharp this one frame and
-    // re-snapshot. A culled render() is cheap enough here; the next gesture frame then
-    // blits from the fresh, fully-covering image. render() BEFORE captureSnap() — the
-    // latter assumes the live canvas is already sharp.
-    if (coverRatio < 0.5) { render(); captureSnap(); return; }
+    // Re-anchor with a sharp render + fresh snapshot when either (a) too little of the
+    // frozen frame is left (fast fling / big pinch-out — the exposed ring would be most of
+    // the screen), or (b) the snapshot has been scaled up past 1.5× (zoom-in transition /
+    // pinch-in), where the transferred pixels turn soft. A culled render() is cheap enough
+    // here and the next tick blits from the fresh, crisp image. render() BEFORE captureSnap()
+    // — the latter assumes the live canvas is already sharp.
+    if (coverRatio < 0.5 || r > 1.5) { render(); captureSnap(); return; }
 
     // Transfer the frozen frame (Run 8 math).
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1001,7 +1035,9 @@
     if (pulseRAF) return;
     const loop = () => {
       if (!hasTarget()) { pulseRAF = 0; return; }
-      render();
+      // A programmatic transition (e.g. this question's focusFeature) is blitting the map;
+      // skip our sharp render so the two don't alternate. The pulse resumes once it ends.
+      if (!transitioning) render();
       pulseRAF = requestAnimationFrame(loop);
     };
     pulseRAF = requestAnimationFrame(loop);
@@ -1066,6 +1102,7 @@
 
   function fitToFeatures(features, animate) {
     state.fittedFeatures = features;
+    state.preFocus = null;         // reframing the projection voids any pending auto-focus rollback
     state.viewMode = "fit";
     resizeCanvas();
     const fc = { type: "FeatureCollection", features };
@@ -1096,6 +1133,7 @@
     scale = Math.max(1, Math.min(14, scale));   // cap = zoom scaleExtent upper bound
     const tx = cssW / 2 - scale * cx, ty = cssH / 2 - scale * cy;
     const tr = d3.zoomIdentity.translate(tx, ty).scale(scale);
+    if (animate) beginTransition();   // blit the focus glide instead of re-rendering every frame
     const sel = animate ? canvasSel.transition().duration(650) : canvasSel;
     sel.call(zoom.transform, tr);
   }
@@ -1369,11 +1407,27 @@
     els.explainPanel.hidden = true;
     clearMapStates();
     updateProgress();
-    // A previous wrong answer / explanation panel may have left the map zoomed onto
-    // one country. Re-fit before the next FIND question so the player isn't hunting
-    // from a stale close-up. NAME mode re-frames itself via focusFeature, so skip it there.
-    if ((state.settings.mode === "find" || state.settings.mode === "explore") && state.viewMode === "focus") {
-      fitToFeatures(state.fittedFeatures || state.features, true);
+    // A previous wrong answer / explanation panel may have zoomed onto one country. Roll
+    // that AUTO-focus back to the view the player had just before it (preFocus) — but only
+    // the app's own focus: a user gesture cleared preFocus, so their own pan/zoom is kept
+    // (this replaces Run 2's always-re-fit, which was the "zoom keeps snapping back" annoyance).
+    // NAME mode re-frames itself via focusFeature every question, so it is left untouched.
+    if (state.settings.mode === "find" || state.settings.mode === "explore") {
+      if (state.preFocus) {
+        if (state.preFocus.gen === pathsGen) {
+          const p = state.preFocus.t;
+          const tr = d3.zoomIdentity.translate(p.x, p.y).scale(p.k);
+          state.viewMode = "fit";        // rolled back to the (fit-era) user view; no focused feature
+          state.viewFeature = null;
+          beginTransition();             // glide back via blit
+          canvasSel.transition().duration(400).call(zoom.transform, tr);
+        } else {
+          // Projection changed under us (resize/rotate): the saved transform no longer maps,
+          // so fall back to a fresh region fit like the old behavior.
+          fitToFeatures(state.fittedFeatures || state.features, true);
+        }
+        state.preFocus = null;
+      }
     }
     const c = currentCountry();
     if (state.settings.mode === "find") askFind(c);
@@ -1478,7 +1532,8 @@
     toast("正解は " + c.ja + " でした", "ng");
     scoreWrong(c.id);
     // find の不正解と同じく、解説オフのときだけ自前でズーム（オンなら showExplain が寄せる）。
-    if (!state.settings.explain) focusFeature(c.feature);
+    // 巻き戻し用に直前の視点を保存してからフォーカス。
+    if (!state.settings.explain) { savePreFocus(); focusFeature(c.feature); }
     finishTurn(c, false, 2200);
   }
 
@@ -1805,7 +1860,8 @@
       toast("正解は " + c.ja, "ng");
       // Burn the location in: zoom to where it actually was. When explain is on,
       // showExplain already focuses this feature, so only do it ourselves when it's off.
-      if (!state.settings.explain) focusFeature(c.feature);
+      // Save the current view first so nextQuestion can roll this auto-focus back.
+      if (!state.settings.explain) { savePreFocus(); focusFeature(c.feature); }
     }
     finishTurn(c, correct, correct ? 900 : 2200);
   }
@@ -1951,6 +2007,10 @@
     els.promptBar.hidden = true;
     els.choices.hidden = true;
     els.explainPanel.hidden = false;
+    // find/explore: save the pre-focus view so nextQuestion rolls this focus back. NAME
+    // mode focuses every question by design (no rollback), and journey uses its own flow,
+    // so neither records preFocus.
+    if (state.settings.mode === "find" || state.settings.mode === "explore") savePreFocus();
     // Focus AFTER the panel is shown so the map is already at its final size.
     focusFeature(c.feature);
   }
