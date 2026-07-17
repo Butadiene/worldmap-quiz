@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v20";
+  const APP_VERSION = "v21";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -88,6 +88,7 @@
     promptBar: $("prompt-bar"), promptKicker: $("prompt-kicker"),
     promptTarget: $("prompt-target"), promptHint: $("prompt-hint"),
     giveup: $("giveup-btn"), hint: $("hint-btn"), choices: $("choices"),
+    choicesKicker: $("choices-kicker"),
     choicesGrid: $("choices-grid"), toast: $("toast"), toastIcon: $("toast-icon"),
     toastText: $("toast-text"), zoomControls: $("zoom-controls"),
     zoomIn: $("zoom-in"), zoomOut: $("zoom-out"), zoomReset: $("zoom-reset"),
@@ -1268,7 +1269,9 @@
   // Restore a previously saved setup, validating every field before applying it.
   function applySavedSettings(s) {
     if (!s || typeof s !== "object") return;
-    const modes = ["find", "name", "explore", "journey", "browse", "progress"];
+    // explore / journey はメニューから外した（コードは残置）。保存設定に残っていても
+    // ここで弾かれてデフォルトの find に落ちる。
+    const modes = ["find", "name", "recall", "browse", "progress"];
     if (modes.indexOf(s.mode) !== -1) {
       state.settings.mode = s.mode;
       activateSeg("mode-seg", "mode", s.mode);
@@ -1493,6 +1496,7 @@
     const c = currentCountry();
     if (state.settings.mode === "find") askFind(c);
     else if (state.settings.mode === "explore") askExplore(c);
+    else if (state.settings.mode === "recall") askRecall(c);
     else askName(c);
   }
 
@@ -1956,6 +1960,7 @@
   function askName(c) {
     els.promptBar.hidden = true;
     els.choices.hidden = false;
+    els.choicesKicker.textContent = "ハイライトされた国は？";   // recall モードが書き換えるので戻す
 
     setMark(c.id, "target");
     render();
@@ -1999,6 +2004,77 @@
     }
     render();
     finishTurn(c, correct, correct ? 900 : 1400);
+  }
+
+  /* ============================================================
+     名前を思い出す (recall) — 選択肢に頼らず国名を言えるようにするモード。
+     フェーズ1: 国をハイライトし「はっきり思い浮かべてみよう」＋『思い浮かべた！』ボタンのみ。
+     フェーズ2: 5択で答え合わせ — 国名4つ＋「ここにはなかった」。正解名が選択肢に
+     混ざるのは半々なので、先に自力で名前を確定していないと答えられない。
+     ============================================================ */
+  function askRecall(c) {
+    els.promptBar.hidden = true;
+    els.choices.hidden = false;
+
+    setMark(c.id, "target");
+    render();
+    startPulse();
+    focusFeature(c.feature);
+
+    els.choicesKicker.textContent = "この国の名前は？はっきり思い浮かべてみよう";
+    els.choicesGrid.innerHTML = "";
+    const btn = document.createElement("button");
+    btn.className = "choice span2 recall-go";
+    btn.textContent = "思い浮かべた！";
+    btn.onclick = () => showRecallChoices(c);
+    els.choicesGrid.appendChild(btn);
+  }
+
+  function showRecallChoices(c) {
+    if (state.locked) return;
+    els.choicesKicker.textContent = "思い浮かべた名前はある？";
+    const present = Math.random() < 0.5;   // 正解名を選択肢に混ぜるかは半々
+    const opts = present
+      ? shuffle([c, ...pickDistractors(c, 3)])
+      : shuffle(pickDistractors(c, 4));
+    els.choicesGrid.innerHTML = "";
+    opts.forEach((o) => {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.textContent = o.ja;
+      btn.onclick = () => onRecallChoice(o.id === c.id, c, btn, present);
+      els.choicesGrid.appendChild(btn);
+    });
+    const none = document.createElement("button");
+    none.className = "choice span2 not-here";
+    none.textContent = "ここにはなかった";
+    none.dataset.nothere = "1";
+    none.onclick = () => onRecallChoice(!present, c, none, present);
+    els.choicesGrid.appendChild(none);
+  }
+
+  function onRecallChoice(correct, c, btn, present) {
+    if (state.locked) return;
+    state.locked = true;
+    stopPulse();
+    els.choicesGrid.querySelectorAll(".choice").forEach((b) => {
+      b.disabled = true;
+      const isAnswer = present ? b.textContent === c.ja : b.dataset.nothere === "1";
+      if (isAnswer) b.classList.add("correct");
+    });
+    if (correct) {
+      setMark(c.id, "correct");
+      scoreCorrect();
+      // 「ここにはなかった」正解のときも国名を必ず見せて答え合わせにする。
+      toast(correctMsg() + "（" + c.ja + "）", "ok");
+    } else {
+      btn.classList.add("wrong");
+      setMark(c.id, "wrong");
+      scoreWrong(c.id);
+      toast("正解は " + c.ja, "ng");
+    }
+    render();
+    finishTurn(c, correct, correct ? 1100 : 1600);
   }
 
   /* ============================================================

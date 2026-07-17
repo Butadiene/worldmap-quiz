@@ -225,6 +225,11 @@ body {
 .choice.correct { background: var(--correct); border-color: var(--correct); color: #fff; }
 .choice.wrong { background: var(--wrong); border-color: var(--wrong); color: #fff; }
 .choice:disabled { cursor: default; }
+/* 名前を思い出すモード: 全幅ボタン（『思い浮かべた！』と『ここにはなかった』） */
+.choice.span2 { grid-column: 1 / -1; }
+.choice.recall-go { background: var(--primary-tint); border-color: var(--primary); color: var(--primary); }
+.choice.not-here { border-style: dashed; color: var(--ink-soft); }
+.choice.not-here.correct, .choice.not-here.wrong { border-style: solid; color: #fff; }
 
 /* ===== Field hint ===== */
 .field-hint { font-size: 12px; color: var(--ink-faint); margin: 8px 2px 0; line-height: 1.5; }
@@ -297,7 +302,11 @@ body {
 .setup-eyebrow { color: var(--primary); font-weight: 800; font-size: 12px; letter-spacing: .14em; margin: 0 0 6px; }
 .setup-title { font-size: 30px; font-weight: 800; margin: 0 0 10px; letter-spacing: .01em; }
 .setup-lede { color: var(--ink-soft); font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
-.setup-rank { color: var(--primary); font-weight: 700; font-size: 13px; margin: -14px 0 24px; }
+/* 出典と未収録国の注記（説明文の下・称号の上） */
+.setup-credit { font-size: 11px; color: var(--ink-faint); line-height: 1.7; margin: -12px 0 20px; }
+.setup-credit p { margin: 0 0 6px; }
+.setup-credit a { color: var(--ink-soft); }
+.setup-rank { color: var(--primary); font-weight: 700; font-size: 13px; margin: 0 0 24px; }
 
 .field { margin-bottom: 20px; }
 .field-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); letter-spacing: .06em; margin-bottom: 9px; }

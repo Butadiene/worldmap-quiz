@@ -89,7 +89,7 @@
 
     <!-- ===== Choices (name-the-country mode) ===== -->
     <section class="choices" id="choices" hidden>
-      <p class="choices-kicker">ハイライトされた国は？</p>
+      <p class="choices-kicker" id="choices-kicker">ハイライトされた国は？</p>
       <div class="choices-grid" id="choices-grid"></div>
     </section>
 
@@ -118,6 +118,10 @@
         <p class="setup-eyebrow">白地図で国を覚える</p>
         <h1 class="setup-title">世界地図クイズ</h1>
         <p class="setup-lede">地図をタップして国を当てるか、光った国の名前を選ぶ。オフラインでもくり返し練習できます。</p>
+        <div class="setup-credit">
+          <p>地図データ: <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a>（出典: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>・パブリックドメイン）。国名・首都・解説文は本アプリ独自の編集データです（収録: 182の国と地域）。</p>
+          <p>サイズが小さく地図に出せていない国: バチカン市国、モナコ、サンマリノ、リヒテンシュタイン、アンドラ、ナウル、ツバル、パラオ、マーシャル諸島、ミクロネシア連邦、キリバス、トンガ、セントクリストファー・ネービス、セントルシア、セントビンセント・グレナディーン、アンティグア・バーブーダ、ドミニカ国、グレナダ</p>
+        </div>
         <p class="setup-rank" id="setup-rank" hidden></p>
 
         <div class="field">
@@ -125,8 +129,7 @@
           <div class="segmented" id="mode-seg">
             <button class="seg-btn active" data-mode="find">地図で探す</button>
             <button class="seg-btn" data-mode="name">名前を選ぶ</button>
-            <button class="seg-btn" data-mode="explore">たんけん</button>
-            <button class="seg-btn" data-mode="journey">世界一周</button>
+            <button class="seg-btn" data-mode="recall">名前を思い出す</button>
             <button class="seg-btn" data-mode="browse">地図を見る</button>
             <button class="seg-btn" data-mode="progress">成績マップ</button>
           </div>
