@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v21";
+  const APP_VERSION = "v24";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -2046,11 +2046,19 @@
       els.choicesGrid.appendChild(btn);
     });
     const none = document.createElement("button");
-    none.className = "choice span2 not-here";
+    none.className = "choice not-here";
     none.textContent = "ここにはなかった";
     none.dataset.nothere = "1";
     none.onclick = () => onRecallChoice(!present, c, none, present);
     els.choicesGrid.appendChild(none);
+    // 6つ目: 思い浮かべられなかったときの正直な逃げ道。常に不正解扱いだが、
+    // 誤答ボタンの赤フラッシュは付けない（当て推量の失敗とは区別する）。
+    const idk = document.createElement("button");
+    idk.className = "choice not-here";
+    idk.textContent = "わからなかった";
+    idk.dataset.idk = "1";
+    idk.onclick = () => onRecallChoice(false, c, idk, present);
+    els.choicesGrid.appendChild(idk);
   }
 
   function onRecallChoice(correct, c, btn, present) {
@@ -2068,7 +2076,7 @@
       // 「ここにはなかった」正解のときも国名を必ず見せて答え合わせにする。
       toast(correctMsg() + "（" + c.ja + "）", "ok");
     } else {
-      btn.classList.add("wrong");
+      if (!btn.dataset.idk) btn.classList.add("wrong");   // 「わからなかった」は赤くしない
       setMark(c.id, "wrong");
       scoreWrong(c.id);
       toast("正解は " + c.ja, "ng");
