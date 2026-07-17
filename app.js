@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v24";
+  const APP_VERSION = "v25";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -2009,8 +2009,9 @@
   /* ============================================================
      名前を思い出す (recall) — 選択肢に頼らず国名を言えるようにするモード。
      フェーズ1: 国をハイライトし「はっきり思い浮かべてみよう」＋『思い浮かべた！』ボタンのみ。
-     フェーズ2: 5択で答え合わせ — 国名4つ＋「ここにはなかった」。正解名が選択肢に
-     混ざるのは半々なので、先に自力で名前を確定していないと答えられない。
+     フェーズ2: 6択で答え合わせ — 国名4つ＋「ここにはなかった」＋「わからなかった」。
+     正解名が選択肢に混ざるのは8割（2割は「ここにはなかった」が正解）なので、
+     先に自力で名前を確定していないと答えられない。
      ============================================================ */
   function askRecall(c) {
     els.promptBar.hidden = true;
@@ -2033,7 +2034,7 @@
   function showRecallChoices(c) {
     if (state.locked) return;
     els.choicesKicker.textContent = "思い浮かべた名前はある？";
-    const present = Math.random() < 0.5;   // 正解名を選択肢に混ぜるかは半々
+    const present = Math.random() < 0.8;   // 正解名を選択肢に混ぜる確率（8割。「ここにはなかった」が正解なのは2割）
     const opts = present
       ? shuffle([c, ...pickDistractors(c, 3)])
       : shuffle(pickDistractors(c, 4));

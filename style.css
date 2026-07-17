@@ -349,7 +349,15 @@ body {
 .setup-foot.online { color: var(--correct); }
 .setup-foot.offline { color: var(--ink-faint); }
 .setup-version { text-align: center; font-size: 10px; color: var(--ink-faint); opacity: .7; margin: 4px 0 0; }
-/* カード最下部: 未収録国リストと免責事項 */
+/* ホーム画面に追加（PWA インストール）の案内カード */
+.setup-install {
+  background: #f6f9fa; border-radius: 12px; padding: 10px 12px; margin: 14px 0 0;
+  font-size: 11px; color: var(--ink-soft); line-height: 1.8;
+}
+.setup-install p { margin: 0 0 4px; }
+.setup-install p:last-child { margin-bottom: 0; }
+
+/* カード最下部: 未収録国リスト（免責事項は上部 .setup-credit 内） */
 .setup-legal {
   border-top: 1px solid #e4ebed; margin-top: 18px; padding-top: 12px;
   font-size: 10px; color: var(--ink-faint); line-height: 1.7;
