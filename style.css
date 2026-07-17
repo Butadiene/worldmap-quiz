@@ -313,17 +313,15 @@ body {
 .field {
   margin-bottom: 14px;
   background: #f8fafb;
-  border: 1px solid #e4ebee;
+  border: 1.5px solid #b6c8cf;
   border-radius: 14px;
   padding: 14px 14px 12px;
 }
 .field-label {
-  display: flex; align-items: center; gap: 7px;
+  display: block;
   font-size: 13px; font-weight: 800; color: var(--ink);
   letter-spacing: .05em; margin-bottom: 10px;
 }
-/* ラベル先頭のアイコンはやや大きく、色に頼らない目印にする */
-.field-label .fl-icon { font-size: 15px; line-height: 1; }
 
 .segmented { display: flex; gap: 6px; background: #e8eef1; padding: 4px; border-radius: 12px; }
 .seg-btn {
@@ -346,14 +344,32 @@ body {
 }
 .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
-/* Grouped region picker (continent → sub-regions) */
-.region-select { display: flex; flex-direction: column; gap: 12px; }
-.region-select > .chip { align-self: flex-start; }
-.region-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.region-group-label {
-  width: 100%; font-size: 11px; font-weight: 800; letter-spacing: .08em;
-  color: var(--ink-faint); margin: 2px 0 -2px;
+/* Two-level region picker: continents always visible, sub-regions in a tray that
+   opens on continent tap (progressive disclosure — keeps the setup screen short). */
+.region-select { display: flex; flex-direction: column; gap: 10px; }
+.region-top { display: flex; flex-wrap: wrap; gap: 8px; }
+.region-sub {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  background: #e8eef1; border-radius: 12px; padding: 10px;
 }
+.chip.open { border-color: var(--primary); }
+/* 選択中のサブ地域を抱えている大陸チップ: トレイが閉じていても「この中に選択がある」と示す */
+.chip.holds { background: var(--primary-tint); border-color: var(--primary); color: var(--primary-deep); }
+/* 「地域」ラベル横の選択中表示 */
+.field-value { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 700; color: var(--primary); }
+
+/* くわしい設定（問題数・解説・効果音）: 折りたたみ。要約行で現在値が見える。 */
+#more-settings summary {
+  cursor: pointer; list-style: none; text-align: center;
+  font-size: 13px; font-weight: 800; color: var(--ink); letter-spacing: .05em;
+}
+#more-settings summary::-webkit-details-marker { display: none; }
+#more-settings summary::after { content: " ▾"; color: var(--ink-faint); }
+#more-settings[open] summary::after { content: " ▴"; }
+.more-values { display: inline-block; font-size: 11px; font-weight: 600; color: var(--ink-faint); margin-left: 8px; }
+/* 中の各設定は外枠を持たない（親の details が枠） */
+#more-settings .field { border: none; background: none; padding: 0; margin: 16px 0 0; }
+#more-settings { margin-top: 14px; }
 
 /* Browse (study) mode: keep only the ✕ in the top bar */
 .stats.browse .stat { display: none; }

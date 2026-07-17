@@ -125,7 +125,7 @@
         <p class="setup-rank" id="setup-rank" hidden></p>
 
         <div class="field">
-          <label class="field-label"><span class="fl-icon">🎯</span>出題モード</label>
+          <label class="field-label">出題モード</label>
           <div class="segmented" id="mode-seg">
             <button class="seg-btn active" data-mode="find">地図で探す</button>
             <button class="seg-btn" data-mode="name">名前を選ぶ</button>
@@ -136,12 +136,17 @@
         </div>
 
         <div class="field">
-          <label class="field-label"><span class="fl-icon">🌍</span>地域</label>
+          <label class="field-label">地域<span class="field-value" id="region-current"></span></label>
           <div class="region-select" id="region-chips">
-            <button class="chip active" data-region="all">世界全体</button>
-
-            <div class="region-group">
-              <span class="region-group-label">アジア</span>
+            <div class="region-top">
+              <button class="chip active" data-region="all">世界全体</button>
+              <button class="chip" data-group="asia">アジア ▾</button>
+              <button class="chip" data-group="europe">ヨーロッパ ▾</button>
+              <button class="chip" data-group="africa">アフリカ ▾</button>
+              <button class="chip" data-group="america">アメリカ ▾</button>
+              <button class="chip" data-region="oceania">オセアニア</button>
+            </div>
+            <div class="region-sub" id="sub-asia" hidden>
               <button class="chip" data-region="asia">アジア全体</button>
               <button class="chip" data-region="east_asia">東アジア</button>
               <button class="chip" data-region="southeast_asia">東南アジア</button>
@@ -149,18 +154,14 @@
               <button class="chip" data-region="central_asia">中央アジア</button>
               <button class="chip" data-region="west_asia">西アジア（中東）</button>
             </div>
-
-            <div class="region-group">
-              <span class="region-group-label">ヨーロッパ</span>
+            <div class="region-sub" id="sub-europe" hidden>
               <button class="chip" data-region="europe">ヨーロッパ全体</button>
               <button class="chip" data-region="north_europe">北ヨーロッパ</button>
               <button class="chip" data-region="west_europe">西ヨーロッパ</button>
               <button class="chip" data-region="east_europe">東ヨーロッパ</button>
               <button class="chip" data-region="south_europe">南ヨーロッパ</button>
             </div>
-
-            <div class="region-group">
-              <span class="region-group-label">アフリカ</span>
+            <div class="region-sub" id="sub-africa" hidden>
               <button class="chip" data-region="africa">アフリカ全体</button>
               <button class="chip" data-region="north_africa">北アフリカ</button>
               <button class="chip" data-region="west_africa">西アフリカ</button>
@@ -168,24 +169,17 @@
               <button class="chip" data-region="central_africa">中部アフリカ</button>
               <button class="chip" data-region="southern_africa">南部アフリカ</button>
             </div>
-
-            <div class="region-group">
-              <span class="region-group-label">アメリカ</span>
+            <div class="region-sub" id="sub-america" hidden>
               <button class="chip" data-region="north_america">北アメリカ</button>
               <button class="chip" data-region="central_america">中央アメリカ</button>
               <button class="chip" data-region="caribbean">カリブ</button>
               <button class="chip" data-region="south_america">南アメリカ</button>
             </div>
-
-            <div class="region-group">
-              <span class="region-group-label">オセアニア</span>
-              <button class="chip" data-region="oceania">オセアニア</button>
-            </div>
           </div>
         </div>
 
         <div class="field" id="count-field">
-          <label class="field-label"><span class="fl-icon">🔢</span>問題数</label>
+          <label class="field-label">問題数</label>
           <div class="segmented four" id="count-seg">
             <button class="seg-btn" data-count="10">10問</button>
             <button class="seg-btn active" data-count="20">20問</button>
@@ -195,8 +189,12 @@
           <p class="field-hint">サバイバル: ライフ3つで挑戦。ミス3回で終了、自己ベストを狙おう。</p>
         </div>
 
-        <div class="field" id="explain-field">
-          <label class="field-label"><span class="fl-icon">💡</span>解説モード</label>
+        <button class="btn primary big" id="start-btn">スタート</button>
+
+        <details class="field" id="more-settings">
+          <summary>くわしい設定<span class="more-values" id="more-values"></span></summary>
+          <div class="field" id="explain-field">
+          <label class="field-label">解説モード</label>
           <div class="segmented" id="explain-seg">
             <button class="seg-btn" data-explain="0">オフ</button>
             <button class="seg-btn active" data-explain="1">オン</button>
@@ -205,15 +203,15 @@
         </div>
 
         <div class="field" id="sound-field">
-          <label class="field-label"><span class="fl-icon">🔊</span>効果音</label>
+          <label class="field-label">効果音</label>
           <div class="segmented" id="sound-seg">
             <button class="seg-btn active" data-sound="0">オフ</button>
             <button class="seg-btn" data-sound="1">オン</button>
           </div>
           <p class="field-hint">正解・不正解などを小さな音でお知らせします。</p>
         </div>
+        </details>
 
-        <button class="btn primary big" id="start-btn">スタート</button>
         <p class="setup-foot" id="offline-badge">● オフライン準備完了</p>
         <p class="setup-version" id="app-version"></p>
         <div class="setup-install">

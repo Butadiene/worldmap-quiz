@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v27";
+  const APP_VERSION = "v28";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -103,6 +103,7 @@
     explainStats: $("explain-stats"), explainNext: $("explain-next"),
     countField: $("count-field"), explainField: $("explain-field"),
     soundField: $("sound-field"),
+    moreSettings: $("more-settings"), moreValues: $("more-values"),
     masteryLegend: $("mastery-legend"),
   };
 
@@ -350,6 +351,8 @@
     if (!state.stats || typeof state.stats !== "object" || Array.isArray(state.stats)) state.stats = {};
     wireSetup();
     applySavedSettings(store.get(SETTINGS_KEY, null));
+    updateSettingsSummary();
+    updateRegionCurrent();
     updateRank();
     registerSW();
     updateOnlineBadge();
@@ -1234,10 +1237,10 @@
      ============================================================ */
   function wireSetup() {
     segGroup("mode-seg", "mode", onModeChange);
-    chipGroup("region-chips", (v) => (state.settings.region = v));
-    segGroup("count-seg", "count", (v) => (state.settings.count = parseInt(v, 10)));
-    segGroup("explain-seg", "explain", (v) => (state.settings.explain = v === "1"));
-    segGroup("sound-seg", "sound", (v) => (state.settings.sound = v === "1"));
+    chipGroup("region-chips", (v) => { state.settings.region = v; updateRegionCurrent(); });
+    segGroup("count-seg", "count", (v) => { state.settings.count = parseInt(v, 10); updateSettingsSummary(); });
+    segGroup("explain-seg", "explain", (v) => { state.settings.explain = v === "1"; updateSettingsSummary(); });
+    segGroup("sound-seg", "sound", (v) => { state.settings.sound = v === "1"; updateSettingsSummary(); });
 
     els.start.onclick = () => {
       if (!state.features.length) {
@@ -1301,14 +1304,56 @@
       .forEach((b) => b.classList.toggle("active", b.dataset[attr] === val));
   }
   function activateChip(id, region) {
-    $(id).querySelectorAll(".chip")
+    const wrap = $(id);
+    wrap.querySelectorAll(".chip")
       .forEach((b) => b.classList.toggle("active", b.dataset.region === region));
+    // アクティブなチップがサブ地域トレイの中なら、そのトレイだけ開いて見えるようにする。
+    const active = wrap.querySelector(".chip.active");
+    const sub = active ? active.closest(".region-sub") : null;
+    wrap.querySelectorAll(".region-sub").forEach((s) => (s.hidden = s !== sub));
+    wrap.querySelectorAll(".chip[data-group]").forEach((b) =>
+      b.classList.toggle("open", !!sub && sub.id === "sub-" + b.dataset.group));
+    syncRegionHolds();
+  }
+
+  // 「地域」ラベル横の選択中表示。選択チップが閉じたトレイの中に隠れていても
+  // （例: 北アフリカ選択中にアジアのトレイを開いた状態）現在の選択が常に読める。
+  function regionDisplayName(r) {
+    if (r === "asia" || r === "europe" || r === "africa") return REGION_LABEL[r] + "全体";  // チップの文言と揃える
+    if (REGION_LABEL[r]) return REGION_LABEL[r];
+    const sub = SUBREGIONS[r];
+    return sub ? sub.label : "";
+  }
+  function updateRegionCurrent() {
+    const el = $("region-current");
+    if (el) el.textContent = regionDisplayName(state.settings.region);
+  }
+
+  // 選択中のサブ地域を「保持している」大陸チップに .holds を付ける（トレイの開閉と無関係）。
+  // どの大陸の中に選択が隠れているかを常に示すためのしるし。
+  function syncRegionHolds() {
+    const wrap = $("region-chips");
+    if (!wrap) return;
+    const active = wrap.querySelector(".chip.active");
+    const sub = active ? active.closest(".region-sub") : null;
+    wrap.querySelectorAll(".chip[data-group]").forEach((b) =>
+      b.classList.toggle("holds", !!sub && sub.id === "sub-" + b.dataset.group));
+  }
+
+  // 「くわしい設定」の要約行（解説・効果音の現在値）。畳んだままでも状態が見える。
+  function updateSettingsSummary() {
+    if (!els.moreValues) return;
+    const s = state.settings;
+    els.moreValues.textContent = "解説" + (s.explain ? "オン" : "オフ")
+      + " / 効果音" + (s.sound ? "オン" : "オフ");
   }
 
   // Toggle quiz-only settings and the start button label for the study mode.
   function onModeChange(v) {
     state.settings.mode = v;
     const noQuiz = v === "browse" || v === "progress";   // non-quiz views hide count/explain/sound
+    // 非クイズ表示では「くわしい設定」ごと隠す（中身が全部無関係になるため）。
+    if (els.moreSettings) els.moreSettings.hidden = noQuiz;
     // 世界一周は3旅固定なので問題数だけ隠し、解説/効果音は出す。
     if (els.countField) els.countField.hidden = noQuiz || v === "journey";
     if (els.explainField) els.explainField.hidden = noQuiz;
@@ -1327,13 +1372,36 @@
       };
     });
   }
+  // 地域チップは2段階（段階的開示）: 上段は「世界全体+大陸」だけを常時表示し、
+  // data-group 付きの大陸チップをタップするとサブ地域トレイ (#sub-<group>) が開く
+  // （再タップで閉じる・他のトレイは同時に1つだけ）。大陸チップは展開専用
+  // （data-region なし）で、「アジア全体」等の選択チップはトレイの先頭に入っている。
   function chipGroup(id, cb) {
     const wrap = $(id);
+    const subs = wrap.querySelectorAll(".region-sub");
+    const syncOpen = () => wrap.querySelectorAll(".chip[data-group]").forEach((b) => {
+      const p = $("sub-" + b.dataset.group);
+      b.classList.toggle("open", !!p && !p.hidden);
+    });
     wrap.querySelectorAll(".chip").forEach((b) => {
       b.onclick = () => {
-        wrap.querySelectorAll(".chip").forEach((x) => x.classList.remove("active"));
-        b.classList.add("active");
-        cb(b.dataset.region);
+        const g = b.dataset.group;
+        if (g) {
+          const panel = $("sub-" + g);
+          const wasOpen = panel && !panel.hidden;
+          subs.forEach((s) => (s.hidden = true));
+          if (panel) panel.hidden = wasOpen;      // 同じ大陸の再タップはトレイを閉じる
+          syncOpen();
+        } else if (!b.closest(".region-sub")) {
+          subs.forEach((s) => (s.hidden = true)); // 世界全体/オセアニア: トレイをしまう
+          syncOpen();
+        }
+        if (b.dataset.region) {
+          wrap.querySelectorAll(".chip").forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          cb(b.dataset.region);
+        }
+        syncRegionHolds();
       };
     });
   }
