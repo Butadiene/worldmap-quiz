@@ -225,8 +225,8 @@ body {
 .choice.correct { background: var(--correct); border-color: var(--correct); color: #fff; }
 .choice.wrong { background: var(--wrong); border-color: var(--wrong); color: #fff; }
 .choice:disabled { cursor: default; }
-/* 名前を思い出すモード: 『思い浮かべた！』は全幅、3行目は
-   『ここにはなかった』『わからなかった』の横並び（どちらも破線スタイル） */
+/* 名前を思い出すモード: 『思い浮かべた！』は全幅、答え合わせは
+   国名5択＋『わからなかった』（破線スタイル）の6ボタン */
 .choice.span2 { grid-column: 1 / -1; }
 .choice.recall-go { background: var(--primary-tint); border-color: var(--primary); color: var(--primary); }
 .choice.not-here { border-style: dashed; color: var(--ink-soft); }
@@ -392,6 +392,48 @@ body {
   font-size: 10px; color: var(--ink-faint); line-height: 1.7;
 }
 .setup-legal p { margin: 0 0 6px; }
+
+/* ===== Tutorial (first launch) =====
+   welcome / done カードは地図の上に半透明スクリムで重ねる（後ろで世界地図が
+   フィットする様子が見える）。スキップチップは地図ステージ左上に浮かせる。 */
+.overlay.tutorial {
+  background: rgba(22, 48, 58, .45);
+  z-index: 31;                 /* setup(30) より上・confetti(60) より下 */
+  justify-content: center;
+  overflow-y: auto;
+}
+.tut-card { max-width: 360px; }
+.tut-title { font-size: 24px; font-weight: 800; margin: 0 0 12px; letter-spacing: .01em; }
+.tut-skip-btn { width: 100%; margin-top: 10px; }
+.tut-modes {
+  list-style: none; margin: 0 0 14px; padding: 0; text-align: left;
+  font-size: 13px; color: var(--ink-soft); line-height: 1.65;
+}
+.tut-modes li { margin-bottom: 8px; }
+.tut-modes b { color: var(--ink); }
+.tut-tip { font-size: 12px; color: var(--ink-faint); line-height: 1.7; margin: 0 0 10px; }
+/* 完了カードの「おすすめの進め方」: せまい地域→広げる、の学習パス推奨を軽く強調 */
+.tut-reco {
+  background: var(--primary-tint); border-radius: 10px; padding: 10px 12px;
+  font-size: 12px; color: var(--primary-deep); line-height: 1.7;
+  text-align: left; margin: 0 0 12px;
+}
+/* 完了カード内のインストール案内: モード一覧と揃えて左寄せ、ボタンとの間を空ける */
+.tut-install { margin: 0 0 14px; text-align: left; }
+.tut-skip-chip {
+  position: absolute; left: 12px; top: 12px; z-index: 4;
+  border: none; background: var(--panel); color: var(--ink-soft);
+  font-family: inherit; font-weight: 700; font-size: 12px;
+  padding: 8px 14px; border-radius: 999px;
+  box-shadow: var(--shadow-sm); cursor: pointer;
+}
+.tut-skip-chip:active { transform: scale(.96); }
+/* 設定カード下部の「もう一度見る」リンク */
+.tut-replay {
+  display: block; margin: 10px auto 0; border: none; background: none;
+  color: var(--ink-soft); font-family: inherit; font-size: 12px; font-weight: 700;
+  text-decoration: underline; cursor: pointer;
+}
 
 /* ===== Result screen ===== */
 .result-eyebrow { color: var(--primary); font-weight: 800; font-size: 12px; letter-spacing: .14em; margin: 0 0 14px; text-align: center; }

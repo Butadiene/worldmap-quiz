@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v28";
+  const APP_VERSION = "v29";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -105,6 +105,10 @@
     soundField: $("sound-field"),
     moreSettings: $("more-settings"), moreValues: $("more-values"),
     masteryLegend: $("mastery-legend"),
+    tutorial: $("tutorial"), tutWelcome: $("tut-welcome"), tutDoneCard: $("tut-done"),
+    tutStart: $("tut-start"), tutSkipWelcome: $("tut-skip-welcome"),
+    tutFinish: $("tut-finish"), tutSkip: $("tutorial-skip"), tutReplay: $("tutorial-replay"),
+    tutNext: $("tut-next"), tutInstallCard: $("tut-install-card"),
   };
 
   // ---- state ----
@@ -208,6 +212,7 @@
   const STATS_KEY = "wq.stats.v1";
   const SETTINGS_KEY = "wq.settings.v1";
   const BEST_KEY = "wq.best.v1";   // サバイバル自己ベスト: { [mode+":"+region]: 正解数 }
+  const TUTORIAL_KEY = "wq.tutorial.v1";   // true = チュートリアル体験済み（完了 or スキップ）
 
   const pad3 = (id) => String(id).padStart(3, "0");
   const dataFor = (id) => window.COUNTRY_DATA[pad3(id)] || null;
@@ -385,6 +390,7 @@
         renderMap();
         els.loading.hidden = true;
         updateOnlineBadge();
+        maybeStartTutorial();   // 初回アクセスなら、地図が出たこのタイミングで開始
       })
       .catch((err) => {
         console.error("Map load failed:", err);
@@ -1267,6 +1273,16 @@
     els.giveup.onclick = onGiveUp;
     els.hint.onclick = onHint;
     els.explainNext.onclick = onExplainNext;
+
+    // チュートリアル: 進行ボタンと、いつでも押せる離脱（スキップ）
+    els.tutStart.onclick = tutStepFind;
+    els.tutSkipWelcome.onclick = finishTutorial;
+    // 完了カードの「次へ」: インストール案内へ。すでにホーム画面から起動している
+    // なら案内する意味が無いので直接終了（ボタン文言も tutStepDone で変えている）。
+    els.tutNext.onclick = () => { if (isStandalone()) finishTutorial(); else tutStepInstall(); };
+    els.tutFinish.onclick = finishTutorial;
+    els.tutSkip.onclick = finishTutorial;
+    els.tutReplay.onclick = () => { if (state.features.length) startTutorial(); };
   }
 
   // Restore a previously saved setup, validating every field before applying it.
@@ -1433,6 +1449,194 @@
     clearMapStates();
     if (state.features.length) fitToFeatures(state.features, true);
     updateOnlineBadge();
+  }
+
+  /* ============================================================
+     チュートリアル（初回起動）— 説明を読ませるのではなく、2つの中核モードを
+     1回ずつ実際に触って覚える: welcome カード → れんしゅう①（find: オースト
+     ラリアをタップ）→ れんしゅう②（name: 日本を4択）→ 完了カード。
+     stats / mistakes には一切記録しない（練習は成績を汚さない）。
+     スキップはどの画面からでも可能。二度目以降は自動では出ず、設定カードの
+     「もう一度見る」からだけ再生できる。
+     ============================================================ */
+  // れんしゅう①: 大きくて形が特徴的＝世界地図で必ず見つけられる国。
+  const TUT_FIND = "036";   // オーストラリア
+  // れんしゅう②: 誰でも答えを知っている＝知識ではなく操作だけを学べる国。
+  const TUT_NAME = "392";   // 日本
+  const tut = { active: false, step: null, misses: 0, lock: false };
+  let tutTimer, tutFlashTimer;
+
+  // 初回アクセス判定: 体験済みフラグがある、または既存ユーザー（設定や成績が
+  // 残っている＝フラグ導入前から使っている）なら出さない。
+  function maybeStartTutorial() {
+    if (store.get(TUTORIAL_KEY, false)) return;
+    if (store.get(SETTINGS_KEY, null) || Object.keys(state.stats).length) {
+      store.set(TUTORIAL_KEY, true);
+      return;
+    }
+    startTutorial();
+  }
+
+  function startTutorial() {
+    // 練習に使う2国が地図に無い（データ改変時の保険）なら何もせず通常起動へ。
+    if (!state.byId.get(TUT_FIND) || !state.byId.get(TUT_NAME)) { store.set(TUTORIAL_KEY, true); return; }
+    tut.active = true; tut.step = "welcome"; tut.misses = 0; tut.lock = false;
+    stopConfetti();
+    state.browsing = false; state.progressView = false; state.journey = false;
+    state.journeyRoute = []; state.paint = null; state.labels = false;
+    els.setup.hidden = true;
+    els.result.hidden = true;
+    els.stats.hidden = true;
+    els.progTrack.hidden = true;
+    els.promptBar.hidden = true;
+    els.choices.hidden = true;
+    els.explainPanel.hidden = true;
+    els.masteryLegend.hidden = true;
+    els.zoomControls.hidden = false;
+    els.tutorial.hidden = false;
+    els.tutWelcome.hidden = false;
+    els.tutDoneCard.hidden = true;
+    els.tutInstallCard.hidden = true;
+    els.tutSkip.hidden = true;
+    clearMapStates();
+    fitToFeatures(state.features, true);   // スクリム越しに世界全体が収まる（背景演出を兼ねる）
+  }
+
+  // れんしゅう①: 国名を見て地図をタップ（地図で探すモードの体験）
+  function tutStepFind() {
+    tut.step = "find"; tut.misses = 0; tut.lock = false;
+    els.tutorial.hidden = true;
+    els.tutSkip.hidden = false;
+    els.promptBar.hidden = false;
+    els.giveup.hidden = true;
+    els.hint.hidden = true;
+    els.promptKicker.textContent = "れんしゅう① この国はどこ？";
+    els.promptTarget.textContent = nameOf(state.byId.get(TUT_FIND));
+    els.promptHint.textContent = "地図をタップ";
+    fitToFeatures(state.features, true);   // プロンプトバー表示でステージが縮んだ分を再フィット
+  }
+
+  function onTutorialTap(f) {
+    if (tut.step !== "find" || tut.lock) return;
+    const gid = pad3(f.id);
+    if (gid === TUT_FIND) {
+      tut.lock = true;
+      stopPulse();
+      clearTimeout(tutFlashTimer);
+      state.marks.clear();
+      setMark(gid, "correct");
+      render();
+      buzz(15);
+      toast(tut.misses ? "🎉 せいかい！" : "🎉 一発正解！すごい！", "ok");
+      tutTimer = setTimeout(tutStepName, 1200);
+      return;
+    }
+    // はずれ: タップした国を一瞬だけ赤くして名前を教える。挫折させないため、
+    // 2回はずしたら正解の国を光らせて「見つけられた」体験で終われるようにする。
+    tut.misses++;
+    setMark(gid, "wrong");
+    render();
+    clearTimeout(tutFlashTimer);
+    tutFlashTimer = setTimeout(() => {
+      if (state.marks.get(gid) === "wrong") { state.marks.delete(gid); render(); }
+    }, 650);
+    if (tut.misses >= 2) {
+      setMark(TUT_FIND, "target");
+      startPulse();
+      els.promptHint.textContent = "光っている国をタップ！";
+      toast("そこは " + nameOf(f) + "。光っている国だよ！", "ng");
+    } else {
+      els.promptHint.textContent = "ヒント: 南半球の大きな島国";
+      toast("そこは " + nameOf(f) + "！", "ng");
+    }
+  }
+
+  // れんしゅう②: 光った国の名前を4択で（名前を選ぶモードの体験）
+  function tutStepName() {
+    tut.step = "name"; tut.lock = false;
+    clearMapStates();
+    els.promptBar.hidden = true;
+    els.choices.hidden = false;
+    els.choicesKicker.textContent = "れんしゅう② 光った国の名前は？";
+    const c = state.allCountries.find((x) => x.id === TUT_NAME);
+    setMark(c.id, "target");
+    render();
+    startPulse();
+    focusFeature(c.feature);
+    const opts = shuffle([c, ...pickDistractors(c, 3)]);
+    els.choicesGrid.innerHTML = "";
+    opts.forEach((o) => {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.textContent = o.ja;
+      btn.onclick = () => onTutorialChoice(o, c, btn);
+      els.choicesGrid.appendChild(btn);
+    });
+  }
+
+  function onTutorialChoice(o, c, btn) {
+    if (tut.step !== "name" || tut.lock) return;
+    if (o.id === c.id) {
+      tut.lock = true;
+      stopPulse();
+      els.choicesGrid.querySelectorAll(".choice").forEach((b) => (b.disabled = true));
+      btn.classList.add("correct");
+      setMark(c.id, "correct");
+      render();
+      buzz(15);
+      toast("🎉 そのとおり！", "ok");
+      tutTimer = setTimeout(tutStepDone, 1100);
+    } else {
+      // 練習なので何度でも選び直せる（はずれた選択肢だけ赤くして消す）
+      btn.classList.add("wrong");
+      btn.disabled = true;
+      toast("おしい！もう一度", "ng");
+    }
+  }
+
+  // すでにホーム画面から起動しているか（＝インストール案内が不要な状態）。
+  function isStandalone() {
+    return (window.matchMedia && matchMedia("(display-mode: standalone)").matches)
+      || window.navigator.standalone === true;   // 旧 iOS Safari
+  }
+
+  // 完了カード: 紙吹雪でねぎらい、モードのまとめを見せる。「次へ」でインストール
+  // 案内カードへ（standalone 起動時はスキップするのでボタンを「はじめる！」に）。
+  function tutStepDone() {
+    tut.step = "done";
+    clearMapStates();
+    els.choices.hidden = true;
+    els.tutSkip.hidden = true;
+    fitToFeatures(state.features, true);
+    els.tutNext.textContent = isStandalone() ? "はじめる！" : "次へ →";
+    els.tutorial.hidden = false;
+    els.tutWelcome.hidden = true;
+    els.tutInstallCard.hidden = true;
+    els.tutDoneCard.hidden = false;
+    startConfetti();
+  }
+
+  // インストールのおすすめ（独立カード）。standalone 起動時はここへは来ない。
+  function tutStepInstall() {
+    tut.step = "install";
+    els.tutDoneCard.hidden = true;
+    els.tutInstallCard.hidden = false;
+  }
+
+  // 完了・スキップ共通の出口。フラグを立て、借りた UI を返して設定画面へ。
+  function finishTutorial() {
+    clearTimeout(tutTimer);
+    clearTimeout(tutFlashTimer);
+    stopConfetti();
+    tut.active = false; tut.step = null;
+    store.set(TUTORIAL_KEY, true);
+    els.tutorial.hidden = true;
+    els.tutWelcome.hidden = true;
+    els.tutDoneCard.hidden = true;
+    els.tutInstallCard.hidden = true;
+    els.tutSkip.hidden = true;
+    els.choicesKicker.textContent = "ハイライトされた国は？";   // 借りた choices UI を返す
+    showSetup();
   }
 
   /* ============================================================
@@ -1971,6 +2175,7 @@
     const f = featureAt(mx, my);
     if (!f) return;                        // tapped ocean — ignore
 
+    if (tut.active) { onTutorialTap(f); return; }   // チュートリアル中はクイズに触らせない
     if (state.browsing) { showBrowseDetail(f); return; }
     if (state.locked) return;
     if (state.settings.mode === "explore") { onExploreGuess(f); return; }
@@ -2077,9 +2282,9 @@
   /* ============================================================
      名前を思い出す (recall) — 選択肢に頼らず国名を言えるようにするモード。
      フェーズ1: 国をハイライトし「はっきり思い浮かべてみよう」＋『思い浮かべた！』ボタンのみ。
-     フェーズ2: 6択で答え合わせ — 国名4つ＋「ここにはなかった」＋「わからなかった」。
-     正解名が選択肢に混ざるのは8割（2割は「ここにはなかった」が正解）なので、
-     先に自力で名前を確定していないと答えられない。
+     フェーズ2: 6択で答え合わせ — 国名5つ（正解＋近隣の誤答4つ）＋「わからなかった」。
+     わからなかった は思い浮かべられなかったときの正直な逃げ道（常に不正解扱い、
+     ただし当て推量の失敗と区別して赤フラッシュは付けない）。
      ============================================================ */
   function askRecall(c) {
     els.promptBar.hidden = true;
@@ -2101,49 +2306,38 @@
 
   function showRecallChoices(c) {
     if (state.locked) return;
-    els.choicesKicker.textContent = "思い浮かべた名前はある？";
-    const present = Math.random() < 0.8;   // 正解名を選択肢に混ぜる確率（8割。「ここにはなかった」が正解なのは2割）
-    const opts = present
-      ? shuffle([c, ...pickDistractors(c, 3)])
-      : shuffle(pickDistractors(c, 4));
+    els.choicesKicker.textContent = "思い浮かべた名前は？";
+    const opts = shuffle([c, ...pickDistractors(c, 4)]);   // 正解＋近隣の誤答4つ＝常に正解入りの5択
     els.choicesGrid.innerHTML = "";
     opts.forEach((o) => {
       const btn = document.createElement("button");
       btn.className = "choice";
       btn.textContent = o.ja;
-      btn.onclick = () => onRecallChoice(o.id === c.id, c, btn, present);
+      btn.onclick = () => onRecallChoice(o.id === c.id, c, btn);
       els.choicesGrid.appendChild(btn);
     });
-    const none = document.createElement("button");
-    none.className = "choice not-here";
-    none.textContent = "ここにはなかった";
-    none.dataset.nothere = "1";
-    none.onclick = () => onRecallChoice(!present, c, none, present);
-    els.choicesGrid.appendChild(none);
     // 6つ目: 思い浮かべられなかったときの正直な逃げ道。常に不正解扱いだが、
     // 誤答ボタンの赤フラッシュは付けない（当て推量の失敗とは区別する）。
     const idk = document.createElement("button");
     idk.className = "choice not-here";
     idk.textContent = "わからなかった";
     idk.dataset.idk = "1";
-    idk.onclick = () => onRecallChoice(false, c, idk, present);
+    idk.onclick = () => onRecallChoice(false, c, idk);
     els.choicesGrid.appendChild(idk);
   }
 
-  function onRecallChoice(correct, c, btn, present) {
+  function onRecallChoice(correct, c, btn) {
     if (state.locked) return;
     state.locked = true;
     stopPulse();
     els.choicesGrid.querySelectorAll(".choice").forEach((b) => {
       b.disabled = true;
-      const isAnswer = present ? b.textContent === c.ja : b.dataset.nothere === "1";
-      if (isAnswer) b.classList.add("correct");
+      if (b.textContent === c.ja) b.classList.add("correct");
     });
     if (correct) {
       setMark(c.id, "correct");
       scoreCorrect();
-      // 「ここにはなかった」正解のときも国名を必ず見せて答え合わせにする。
-      toast(correctMsg() + "（" + c.ja + "）", "ok");
+      toast(correctMsg(), "ok");
     } else {
       if (!btn.dataset.idk) btn.classList.add("wrong");   // 「わからなかった」は赤くしない
       setMark(c.id, "wrong");

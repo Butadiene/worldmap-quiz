@@ -51,6 +51,9 @@
         <button class="icon-btn zoom" id="zoom-reset" aria-label="全体表示">⤢</button>
       </div>
 
+      <!-- Tutorial skip (floating, shown only during tutorial map steps) -->
+      <button class="tut-skip-chip" id="tutorial-skip" hidden>チュートリアルをとばす ✕</button>
+
       <!-- Mastery legend (成績マップ mode) -->
       <div class="mastery-legend" id="mastery-legend" hidden>
         <span class="ml-item"><i class="ml-dot ml-good"></i>習得</span>
@@ -176,6 +179,7 @@
               <button class="chip" data-region="south_america">南アメリカ</button>
             </div>
           </div>
+          <p class="field-hint">はじめは「東南アジア」などのせまい地域から少しずつ広げていくのがおすすめです。</p>
         </div>
 
         <div class="field" id="count-field">
@@ -214,6 +218,7 @@
 
         <p class="setup-foot" id="offline-badge">● オフライン準備完了</p>
         <p class="setup-version" id="app-version"></p>
+        <button class="tut-replay" id="tutorial-replay">🎓 チュートリアルをもう一度見る</button>
         <div class="setup-install">
           <p><b>📲 ホーム画面に追加すると、アプリのように使えます</b>（オフライン対応・更新は自動で反映）</p>
           <p>Android（Chrome など）: メニュー ⋮ →「ホーム画面に追加」<br>
@@ -223,6 +228,42 @@
         <div class="setup-legal">
           <p>サイズが小さく地図に出せていない国: バチカン市国、モナコ、サンマリノ、リヒテンシュタイン、アンドラ、ナウル、ツバル、パラオ、マーシャル諸島、ミクロネシア連邦、キリバス、トンガ、セントクリストファー・ネービス、セントルシア、セントビンセント・グレナディーン、アンティグア・バーブーダ、ドミニカ国、グレナダ</p>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== Tutorial (first launch) ===== -->
+    <div class="overlay tutorial" id="tutorial" hidden>
+      <div class="setup-card tut-card" id="tut-welcome" hidden>
+        <p class="setup-eyebrow">はじめまして！</p>
+        <h2 class="tut-title">世界地図クイズへようこそ</h2>
+        <p class="setup-lede">白地図で「国の場所」と「名前」を覚えるアプリです。まずは30秒だけ、遊びかたを体験してみましょう。</p>
+        <button class="btn primary big" id="tut-start">やってみる（30秒）</button>
+        <button class="btn ghost tut-skip-btn" id="tut-skip-welcome">スキップして設定へ</button>
+      </div>
+      <div class="setup-card tut-card" id="tut-done" hidden>
+        <p class="setup-eyebrow">チュートリアル完了！</p>
+        <h2 class="tut-title">🎉 準備完了！</h2>
+        <ul class="tut-modes">
+          <li><b>🗺 地図で探す</b>：国名を見て、地図をタップ（れんしゅう①で体験）</li>
+          <li><b>💡 名前を選ぶ</b>：光った国の名前を選ぶ（れんしゅう②で体験）</li>
+          <li><b>🧠 名前を思い出す</b>：選択肢なしで思い出してから答え合わせ</li>
+          <li><b>📊 成績マップ</b>：くり返すほど、苦手な国がひと目でわかる</li>
+        </ul>
+        <p class="tut-reco">🧭 <b>おすすめの進め方</b>：まずは「東南アジア」などのせまい地域から始めて、覚えたら少しずつ範囲を広げていきましょう。</p>
+        <p class="tut-tip">地図はドラッグやピンチで自由に動かせます。まちがえても大丈夫、まちがえた国はあとから復習できます。</p>
+        <button class="btn primary big" id="tut-next">次へ →</button>
+      </div>
+      <div class="setup-card tut-card" id="tut-install-card" hidden>
+        <p class="setup-eyebrow">さいごにひとつ</p>
+        <h2 class="tut-title">📲 ホーム画面に追加するのがおすすめ</h2>
+        <p class="setup-lede">アプリのようにワンタップで開けて、オフラインでも使えます。更新も自動で反映されます。</p>
+        <div class="setup-install tut-install">
+          <p>Android（Chrome など）: メニュー ⋮ →「ホーム画面に追加」<br>
+             iPhone・iPad（Safari）: 共有ボタン →「ホーム画面に追加」<br>
+             パソコン（Chrome・Edge）: アドレスバー右のインストールアイコン</p>
+        </div>
+        <p class="tut-tip">あとからでも追加できます（設定画面の下にも同じ案内があります）。</p>
+        <button class="btn primary big" id="tut-finish">はじめる！</button>
       </div>
     </div>
 
