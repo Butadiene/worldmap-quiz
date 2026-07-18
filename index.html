@@ -122,7 +122,7 @@
         <h1 class="setup-title">世界地図クイズ</h1>
         <p class="setup-lede">地図をタップして国を当てるか、光った国の名前を選ぶ。オフラインでもくり返し練習できます。</p>
         <div class="setup-credit">
-          <p>地図データ: <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a>（出典: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>・パブリックドメイン）にもとづき、収録する国・地域の範囲（182の国と地域）と国境線もこのデータの基準に従っています。日本語の国名表記・首都・解説文は本アプリ独自の編集です。</p>
+          <p>地図データ: <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a>（出典: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>・パブリックドメイン）にもとづき、収録する国・地域の範囲（200の国と地域）と国境線もこのデータの基準に従っています。日本語の国名表記・首都・解説文は本アプリ独自の編集です。</p>
           <p>免責事項: 本アプリの表示は学習用であり、領土の帰属、国家の承認、境界線の位置について特定の立場を支持・表明するものではありません。係争中の地域も出典データの区分のまま表示しており、表示内容の正確性・完全性を保証するものではありません。</p>
         </div>
         <p class="setup-rank" id="setup-rank" hidden></p>
@@ -147,7 +147,7 @@
               <button class="chip" data-group="europe">ヨーロッパ ▾</button>
               <button class="chip" data-group="africa">アフリカ ▾</button>
               <button class="chip" data-group="america">アメリカ ▾</button>
-              <button class="chip" data-region="oceania">オセアニア</button>
+              <button class="chip" data-group="oceania">オセアニア ▾</button>
             </div>
             <div class="region-sub" id="sub-asia" hidden>
               <button class="chip" data-region="asia">アジア全体</button>
@@ -163,6 +163,7 @@
               <button class="chip" data-region="west_europe">西ヨーロッパ</button>
               <button class="chip" data-region="east_europe">東ヨーロッパ</button>
               <button class="chip" data-region="south_europe">南ヨーロッパ</button>
+              <button class="chip" data-region="micro_europe">ミニ国家</button>
             </div>
             <div class="region-sub" id="sub-africa" hidden>
               <button class="chip" data-region="africa">アフリカ全体</button>
@@ -177,6 +178,10 @@
               <button class="chip" data-region="central_america">中央アメリカ</button>
               <button class="chip" data-region="caribbean">カリブ</button>
               <button class="chip" data-region="south_america">南アメリカ</button>
+            </div>
+            <div class="region-sub" id="sub-oceania" hidden>
+              <button class="chip" data-region="oceania">オセアニア全体</button>
+              <button class="chip" data-region="pacific_islands">太平洋の島国</button>
             </div>
           </div>
           <p class="field-hint">はじめは「東南アジア」などのせまい地域から少しずつ広げていくのがおすすめです。</p>
@@ -226,7 +231,7 @@
              パソコン（Chrome・Edge）: アドレスバー右のインストールアイコン</p>
         </div>
         <div class="setup-legal">
-          <p>サイズが小さく地図に出せていない国: バチカン市国、モナコ、サンマリノ、リヒテンシュタイン、アンドラ、ナウル、ツバル、パラオ、マーシャル諸島、ミクロネシア連邦、キリバス、トンガ、セントクリストファー・ネービス、セントルシア、セントビンセント・グレナディーン、アンティグア・バーブーダ、ドミニカ国、グレナダ</p>
+          <p>バチカン市国やナウルなど、地図上で小さすぎて見えない国は丸いマーカー（●）で表示しています。マーカーをタップすると、ふつうの国と同じように答えられます。ツバルは出典の地図データに形が収録されていないため、位置のみをマーカーで示しています。</p>
         </div>
       </div>
     </div>

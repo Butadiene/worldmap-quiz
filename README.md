@@ -64,7 +64,7 @@ python3 -m http.server 8000
 
 - 地図: [world-atlas](https://github.com/topojson/world-atlas)（Natural Earth 由来）
 - 描画: [D3.js](https://d3js.org/) + [TopoJSON](https://github.com/topojson/topojson-client)（CDNから読み込み、初回にキャッシュ）
-- 収録国数: 170カ国
+- 収録国数: 200の国と地域（バチカン市国などのミニ国家は丸マーカーで表示）
 
 ## カスタマイズのヒント
 

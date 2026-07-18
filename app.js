@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v30";
+  const APP_VERSION = "v31";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -17,6 +17,45 @@
     other: "その他",
   };
 
+  /* ------------------------------------------------------------
+     ミニ国家 (v31): 地図上で小さすぎて視認・タップできない18か国は、ズームが
+     浅い間は「丸マーカー」で描く（deep zoom で実ポリゴンに引き継ぐ）。ここが
+     その台帳: id -> [lon, lat]（マーカーの地理アンカー = 首都・主島の位置）。
+     マーカーの描画 (render)・当たり判定 (featureAt)・フォーカス (applyFocus)・
+     ラベル (buildLabels) はすべてこのアンカーを共有する。ツバル(798)だけは
+     50m アトラスにポリゴンが無いので、buildFeatures がこの座標の周りに極小の
+     合成ポリゴンを作って通常の国と同じ土俵に乗せる。
+     ------------------------------------------------------------ */
+  const MICRO_POS = {
+    "020": [1.52, 42.51],      // アンドラ (アンドラ・ラ・ベリャ)
+    "028": [-61.85, 17.12],    // アンティグア・バーブーダ (セントジョンズ)
+    "212": [-61.39, 15.30],    // ドミニカ国 (ロゾー)
+    "296": [172.98, 1.33],     // キリバス (タラワ; 全体は日付変更線をまたぐ)
+    "308": [-61.75, 12.05],    // グレナダ (セントジョージズ)
+    "336": [12.45, 41.90],     // バチカン市国
+    "438": [9.52, 47.14],      // リヒテンシュタイン (ファドゥーツ)
+    "492": [7.42, 43.74],      // モナコ
+    "520": [166.92, -0.53],    // ナウル
+    "583": [158.16, 6.92],     // ミクロネシア連邦 (パリキール)
+    "584": [171.38, 7.09],     // マーシャル諸島 (マジュロ)
+    "585": [134.48, 7.35],     // パラオ
+    "659": [-62.72, 17.30],    // セントクリストファー・ネービス (バセテール)
+    "662": [-60.99, 14.01],    // セントルシア (カストリーズ)
+    "670": [-61.23, 13.16],    // セントビンセント・グレナディーン (キングスタウン)
+    "674": [12.45, 43.94],     // サンマリノ
+    "776": [-175.20, -21.14],  // トンガ (ヌクアロファ)
+    "798": [179.19, -8.52],    // ツバル (フナフティ; 50m に無い→合成ポリゴン)
+  };
+  const MICRO_IDS = Object.keys(MICRO_POS);
+  // マーカーが引っ込む閾値: 実ポリゴンの画面上サイズ sqrt(投影面積)*t.k がこの px を
+  // 超えたら（＝ポリゴン自体が見え・タップできる大きさになったら）丸をやめる。
+  // バチカン等はどの実用ズームでも超えないので、実質いつまでも丸のまま（正しい）。
+  const MICRO_HIDE_PX = 12;
+  // マーカーの見た目と当たり判定の半径 (CSS px)。世界表示ではドットの密集を抑えるため
+  // 少し小さく描く。render と featureAt の両方がこの同じ関数を読む（描いた丸＝押せる丸）。
+  const microR = (t) => (t.k >= 3 ? 5 : 3.5);
+  const MICRO_TAP_PAD = 6;   // 指の太さぶんの追加許容 (半径に足す)
+
   // Finer sub-regions, keyed by ISO 3166-1 numeric so countries.js stays untouched.
   const SUBREGIONS = {
     east_asia:       { label: "東アジア",       ids: ["156","158","392","408","410","496"] },
@@ -26,9 +65,13 @@
     west_asia:       { label: "西アジア（中東）", ids: ["031","048","051","196","268","275","364","368","376","400","414","422","512","634","682","760","784","792","887"] },
 
     north_europe:    { label: "北ヨーロッパ",   ids: ["208","233","246","352","372","428","440","578","752","826"] },
-    west_europe:     { label: "西ヨーロッパ",   ids: ["040","056","250","276","442","528","756"] },
+    west_europe:     { label: "西ヨーロッパ",   ids: ["040","056","250","276","438","442","492","528","756"] },
     east_europe:     { label: "東ヨーロッパ",   ids: ["100","112","203","348","498","616","642","643","703","804"] },
-    south_europe:    { label: "南ヨーロッパ",   ids: ["008","070","191","300","380","470","499","620","688","705","724","807"] },
+    south_europe:    { label: "南ヨーロッパ",   ids: ["008","020","070","191","300","336","380","470","499","620","674","688","705","724","807"] },
+    // ヨーロッパのミニ国家だけを集中的に覚える専用枠。south/west_europe と id が重複する
+    // ため skipRev（下の SUBREGION_OF 逆引きから除外: 誤答選択肢のリングは地理的な
+    // サブ地域を使う）。
+    micro_europe:    { label: "ミニ国家",       ids: ["020","336","438","470","492","674"], skipRev: true },
 
     north_africa:    { label: "北アフリカ",     ids: ["012","434","504","729","732","788","818"] },
     west_africa:     { label: "西アフリカ",     ids: ["132","204","270","288","324","384","430","466","478","562","566","624","686","694","768","854"] },
@@ -37,13 +80,19 @@
     southern_africa: { label: "南部アフリカ",   ids: ["072","426","516","710","748"] },
 
     central_america: { label: "中央アメリカ",   ids: ["084","188","222","320","340","558","591"] },
-    caribbean:       { label: "カリブ",         ids: ["044","052","192","214","332","388","630","780"] },
+    caribbean:       { label: "カリブ",         ids: ["028","044","052","192","212","214","308","332","388","630","659","662","670","780"] },
+
+    // オセアニアの島国（豪・NZ・パプアを除く）。ミニ国家6つを含む集中学習枠。
+    pacific_islands: { label: "太平洋の島国",   ids: ["090","242","296","520","548","583","584","585","776","798","882"] },
   };
   Object.keys(SUBREGIONS).forEach((k) => { SUBREGIONS[k].set = new Set(SUBREGIONS[k].ids); });
 
   // Reverse lookup id -> subregion key, so distractors can be drawn from the nearest ring.
+  // skipRev のサブ地域（micro_europe など、他と id が重複する学習用の集合）は逆引きに
+  // 入れない — 誤答選択肢のリングは常に地理的なサブ地域から引く。
   const SUBREGION_OF = new Map();
   Object.keys(SUBREGIONS).forEach((k) => {
+    if (SUBREGIONS[k].skipRev) return;
     SUBREGIONS[k].ids.forEach((id) => SUBREGION_OF.set(id, k));
   });
 
@@ -187,6 +236,8 @@
   const DETAIL_SCALE = 180;
   const geoCentroids = new Map();  // padded id -> [lon,lat] spherical centroid (たんけん距離計算)
   const projCentroids = new Map(); // padded id -> [x,y] projected-plane centroid (世界一周の経路線); rebuilt with paths
+  const microXY = new Map();       // micro id -> [x,y] マーカーアンカーの投影面座標; buildPaths で再構築
+  const microArea = new Map();     // micro id -> 実ポリゴンの投影面積 (マーカー⇄ポリゴンの切替判定); 同上
   const ADJ = new Map();           // padded id -> Set(padded id) 隣接グラフ (陸国境 topojson.neighbors + 海路 SEA_LINKS)
   // Gesture / transition blit snapshot: the last sharp frame + the transform + projection
   // generation it was drawn at (stale gen ⇒ discard, never blit).
@@ -475,6 +526,24 @@
       state.byId.set(id, f);
       state.features.push(f);
     });
+    // ミニ国家のうちアトラスにポリゴンが無い国（50m ではツバルのみ）は、アンカー座標の
+    // 周りに極小のひし形を合成して通常の国と同じ土俵（features/paths/bounds/centroid）に
+    // 乗せる。画面ではほぼ常にマーカーで描かれるので、形はフォーカスと当たり判定の器で
+    // しかない。リングは球面の巻き方向（西→北→東→南で「内側が小さい」）に注意。
+    MICRO_IDS.forEach((id) => {
+      if (state.byId.has(id) || !window.COUNTRY_DATA[id]) return;
+      const [lon, lat] = MICRO_POS[id];
+      const r = 0.22;   // 約24km四方 — 環礁スケールの点
+      const f = {
+        type: "Feature", id,
+        properties: { name: window.COUNTRY_DATA[id].ja, synthetic: true },
+        geometry: { type: "Polygon", coordinates: [[
+          [lon - r, lat], [lon, lat + r], [lon + r, lat], [lon, lat - r], [lon - r, lat],
+        ]] },
+      };
+      state.byId.set(id, f);
+      state.features.push(f);
+    });
     // Distractor source: every renderable country, independent of the current region filter.
     state.allCountries = state.features.map(
       (f) => ({ id: pad3(f.id), ja: nameOf(f), region: regionOf(f), feature: f })
@@ -704,6 +773,15 @@
     }
   }
 
+  // ミニ国家マーカーを出すか: 実ポリゴンが画面上でまだ小さい間だけ true。render() と
+  // featureAt() が同じ関数を読むので「描かれている丸＝押せる丸」（ピクセル一致タップの
+  // 不変条件をマーカーにも適用）。面積0級の国（バチカン等）は実質常に true。
+  function microMarkerVisible(id, t) {
+    if (!microXY.has(id)) return false;
+    const a = microArea.get(id) || 0;
+    return Math.sqrt(a) * t.k < MICRO_HIDE_PX;
+  }
+
   // LOD selectors — ONE decision, shared by render(), blit()'s exposed-ring draw and
   // featureAt() so the drawn pixels and the hit-test always use the SAME path set (the
   // pixel-exact tap invariant). Low detail only when 110m is loaded AND we are zoomed out
@@ -729,6 +807,13 @@
     paths.clear();
     boundsMap.clear();
     projCentroids.clear();
+    // ミニ国家マーカーのアンカーを現在の投影で置き直す（fit のたびにここへ来る）。
+    microXY.clear();
+    MICRO_IDS.forEach((id) => {
+      if (!state.byId.has(id)) return;   // データ改変で消えた国のマーカーは出さない
+      const p = projection(MICRO_POS[id]);
+      if (p && !isNaN(p[0]) && !isNaN(p[1])) microXY.set(id, p);
+    });
     landPath = new Path2D();
     // id なしジオメトリを1本の Path2D にまとめる（landPath と同じ手法で投影に追随）。
     inertPath = new Path2D();
@@ -747,6 +832,10 @@
       // projected-plane centroid for the 世界一周 route line (follows re-fits)。
       // 180°またぎ国は最大ポリゴンの重心にする（全体重心は本土から大きく外れる）。
       projCentroids.set(id, geoPath.centroid(mainPolygonIfSplit(f, b, worldW)));
+      // ミニ国家: マーカー⇄実ポリゴンの切替判定に使う投影面積。bbox でなく面積なのは、
+      // 島が散らばる国（ミクロネシア等）や 180°またぎ（キリバス）の bbox が実際の
+      // 見た目よりはるかに大きく出るため（area() も bounds() 同様 context 非依存）。
+      if (MICRO_POS[id]) microArea.set(id, geoPath.area(f));
       // Stream into landPath too (instead of Path2D.addPath, which older Safari/Firefox
       // lack). Marks stay IN landPath; render step 2 just overpaints them.
       pathGen.context(landPath);
@@ -795,7 +884,7 @@
 
   // Does a country's projected bbox meet an arbitrary CSS rect [x0,y0,x1,y1] (expanded by
   // pad)? Screen(CSS) pos of a world point (x,y) is (t.x + t.k*x, t.y + t.k*y); we test the
-  // bbox corners against the padded rect. Cheap enough for 182×frame. Shared by the viewport
+  // bbox corners against the padded rect. Cheap enough for 200×frame. Shared by the viewport
   // cull (onScreen) and blit's exposed-band selection (Run 13).
   function bboxIntersects(id, t, rect, pad) {
     const b = boundsMap.get(id);
@@ -874,7 +963,7 @@
     return d3.zoomIdentity.translate(tx, ty).scale(k);
   }
 
-  // Gesture frame: instead of re-drawing 182 paths, slide/scale the last sharp frame.
+  // Gesture frame: instead of re-drawing 200 paths, slide/scale the last sharp frame.
   // Derivation — a world point p sat on the snapshot at CSS position s0 = t0.x + t0.k*p.
   // We want it at s = t.x + t.k*p. Writing s = A + r*s0 and solving:
   //   r = t.k / t0.k     (so r*t0.k = t.k)
@@ -1048,6 +1137,35 @@
       ctx.stroke();
     }
 
+    // 2.7) ミニ国家マーカー: ポリゴンが画面上で小さすぎる国を、定サイズの丸で描く。
+    //      塗り色は countryFill（マーク > 成績マップ > 陸色）なので、name モードの
+    //      ターゲット点滅も正誤フラッシュも成績の色分けもポリゴン国と同じルールに従う。
+    //      白いハロー（縁取り）は、陸の上に落ちる欧州ミニ国家（バチカン等は陸色と同色に
+    //      なる）と海上の島国の両方で丸を読めるようにするため。screen-space 描画なので、
+    //      ラベル・経路線と同様「ジェスチャー中の blit ではスナップショットの絵のまま
+    //      伸縮し、露出領域には出ない」— 停止時の render で揃う許容アーティファクト。
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const mr = microR(t);
+    for (let i = 0; i < MICRO_IDS.length; i++) {
+      const id = MICRO_IDS[i];
+      if (!microMarkerVisible(id, t)) continue;
+      const p = microXY.get(id);
+      const x = t.x + t.k * p[0], y = t.y + t.k * p[1];
+      if (x < -20 || x > cssW + 20 || y < -20 || y > cssH + 20) continue;   // 画面外は描かない
+      ctx.beginPath();
+      ctx.arc(x, y, mr + 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, mr, 0, Math.PI * 2);
+      ctx.fillStyle = countryFill(id);
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = COLORS.landStroke;
+      ctx.stroke();
+    }
+    // マーカーは screen-space 描画なので、続くラベル描画と同じく変換はここで張り直し済み。
+
     // 3) country-name labels (browse mode) — drawn unscaled in screen space so
     //    text stays crisp and readable at any zoom; small countries appear as you zoom in.
     if (state.labels && state.labelData.length) {
@@ -1059,7 +1177,8 @@
       for (let i = 0; i < state.labelData.length; i++) {
         const L = state.labelData[i];
         if (L.w * t.k < 24) continue;                      // too small to label yet
-        const x = t.x + t.k * L.cx, y = t.y + t.k * L.cy;
+        const x = t.x + t.k * L.cx;
+        const y = t.y + t.k * L.cy + (L.micro ? 13 : 0);   // ミニ国家は丸マーカーの下に
         if (x < -60 || x > cssW + 60 || y < -16 || y > cssH + 16) continue;
         ctx.lineWidth = 3;
         ctx.strokeStyle = "rgba(255,255,255,.9)";
@@ -1096,6 +1215,15 @@
     const worldW = projectedWorldWidth();
     for (let i = 0; i < features.length; i++) {
       const f = features[i];
+      const id = pad3(f.id);
+      // ミニ国家: ラベルはマーカーアンカーに付ける。実ポリゴン幅では「w*k < 24px」の
+      // 表示条件を実用ズームで満たせないので、0.8°ぶんの擬似幅を与えて、周辺国が
+      // 見分けられる程度のズームで名前が出るようにする（micro フラグで丸の下にずらす）。
+      if (MICRO_POS[id] && microXY.has(id)) {
+        const c = microXY.get(id);
+        state.labelData.push({ name: nameOf(f), cx: c[0], cy: c[1], w: 0.8 * worldW / 360, micro: true });
+        continue;
+      }
       let b = geoPath.bounds(f);
       const g = mainPolygonIfSplit(f, b, worldW);
       if (g !== f) b = geoPath.bounds(g);
@@ -1213,7 +1341,23 @@
   }
   function applyFocus(f, animate) {
     stopFling();
-    const b = geoPath.bounds(f);
+    const mid = f && f.id != null ? pad3(f.id) : null;
+    let b;
+    if (mid && MICRO_POS[mid] && microXY.has(mid)) {
+      // ミニ国家: 実ポリゴンの bounds は小さすぎ（バチカン）・散らばりすぎ（キリバス）で
+      // フォーカスの器にならない。マーカーアンカーの周り±0.75°の擬似 bounds を使い、
+      // 「マーカーと周辺国が一緒に見える」深さへ寄せる（丸マーカーはズームに関係なく
+      // 見えるので、この深さで位置学習に十分）。
+      const p = microXY.get(mid);
+      const w = 0.75 * projectedWorldWidth() / 360;   // 0.75° を投影面 px に換算
+      b = [[p[0] - w, p[1] - w], [p[0] + w, p[1] + w]];
+    } else {
+      b = geoPath.bounds(f);
+      // 180°またぎ国（フィジー等）: 投影 bounds が地図全幅に広がり world-fit に化けるので、
+      // ラベルや経路線と同じく最大ポリゴンの bounds に寄せる。
+      const g = mainPolygonIfSplit(f, b, projectedWorldWidth());
+      if (g !== f) b = geoPath.bounds(g);
+    }
     const dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
     const cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
     let scale = 0.55 / Math.max(dx / cssW, dy / cssH);
@@ -1362,7 +1506,7 @@
   // 「地域」ラベル横の選択中表示。選択チップが閉じたトレイの中に隠れていても
   // （例: 北アフリカ選択中にアジアのトレイを開いた状態）現在の選択が常に読める。
   function regionDisplayName(r) {
-    if (r === "asia" || r === "europe" || r === "africa") return REGION_LABEL[r] + "全体";  // チップの文言と揃える
+    if (r === "asia" || r === "europe" || r === "africa" || r === "oceania") return REGION_LABEL[r] + "全体";  // チップの文言と揃える
     if (REGION_LABEL[r]) return REGION_LABEL[r];
     const sub = SUBREGIONS[r];
     return sub ? sub.label : "";
@@ -1418,7 +1562,8 @@
   // 地域チップは2段階（段階的開示）: 上段は「世界全体+大陸」だけを常時表示し、
   // data-group 付きの大陸チップをタップするとサブ地域トレイ (#sub-<group>) が開く
   // （再タップで閉じる・他のトレイは同時に1つだけ）。大陸チップは展開専用
-  // （data-region なし）で、「アジア全体」等の選択チップはトレイの先頭に入っている。
+  // （data-region なし）で、「アジア全体」等の選択チップはトレイの先頭に入っている
+  // （世界全体だけがトレイを持たない直接選択チップ）。
   function chipGroup(id, cb) {
     const wrap = $(id);
     const subs = wrap.querySelectorAll(".region-sub");
@@ -1436,7 +1581,7 @@
           if (panel) panel.hidden = wasOpen;      // 同じ大陸の再タップはトレイを閉じる
           syncOpen();
         } else if (!b.closest(".region-sub")) {
-          subs.forEach((s) => (s.hidden = true)); // 世界全体/オセアニア: トレイをしまう
+          subs.forEach((s) => (s.hidden = true)); // 世界全体: トレイをしまう
           syncOpen();
         }
         if (b.dataset.region) {
@@ -2162,6 +2307,22 @@
   function featureAt(mx, my) {
     if (!ctx || !projection) return null;
     const t = state.transform || d3.zoomIdentity;
+
+    // 0) ミニ国家マーカー: 表示中の丸（render と同じ microMarkerVisible / microR 判定）を
+    //    先に当てる。丸は陸の上に描かれるので、タップも丸が勝つ — これがないと、
+    //    イタリアの中のバチカン等はポリゴン判定でイタリアに吸われて永遠に押せない。
+    //    複数の丸が重なるときは最近傍を選ぶ（カリブの島の並びなど）。
+    const tapR = microR(t) + MICRO_TAP_PAD;
+    let micro = null, microD = Infinity;
+    for (let i = 0; i < MICRO_IDS.length; i++) {
+      const id = MICRO_IDS[i];
+      if (!microMarkerVisible(id, t)) continue;
+      const p = microXY.get(id);
+      const d = Math.hypot(mx - (t.x + t.k * p[0]), my - (t.y + t.k * p[1]));
+      if (d <= tapR && d < microD) { microD = d; micro = id; }
+    }
+    if (micro) return state.byId.get(micro);
+
     const px = mx * dpr, py = my * dpr;   // isPointInPath wants backing-store px
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
