@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v29";
+  const APP_VERSION = "v30";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -734,6 +734,7 @@
     inertPath = new Path2D();
     pathGen.context(inertPath);
     for (let i = 0; i < state.inertFeatures.length; i++) pathGen(state.inertFeatures[i]);
+    const worldW = projectedWorldWidth();   // 180°またぎ分裂判定用（mainPolygonIfSplit）
     for (let i = 0; i < state.features.length; i++) {
       const f = state.features[i];
       const id = pad3(f.id);
@@ -741,8 +742,11 @@
       pathGen.context(p);
       pathGen(f);
       paths.set(id, p);
-      boundsMap.set(id, geoPath.bounds(f));   // bounds() ignores the render context, so ctx-bound geoPath is safe
-      projCentroids.set(id, geoPath.centroid(f));   // projected-plane centroid for the 世界一周 route line (follows re-fits)
+      const b = geoPath.bounds(f);
+      boundsMap.set(id, b);   // bounds() ignores the render context, so ctx-bound geoPath is safe
+      // projected-plane centroid for the 世界一周 route line (follows re-fits)。
+      // 180°またぎ国は最大ポリゴンの重心にする（全体重心は本土から大きく外れる）。
+      projCentroids.set(id, geoPath.centroid(mainPolygonIfSplit(f, b, worldW)));
       // Stream into landPath too (instead of Path2D.addPath, which older Safari/Firefox
       // lack). Marks stay IN landPath; render step 2 just overpaints them.
       pathGen.context(landPath);
@@ -1067,13 +1071,36 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
+  // 経度180°をまたぐ国（フィジー・NZ・米アリューシャン等）は投影面でポリゴンが地図の
+  // 左右両端に分裂するため、feature 全体の投影重心が本土から大きく外れる（フィジーの
+  // ラベルがバヌアツ付近に落ちる）うえ、投影 bounds の幅もほぼ地図全幅になってしまう。
+  // 投影 bounds の幅が世界幅の半分を超えていたら分裂とみなし、最大面積のポリゴンを
+  // 代表ジオメトリとして返す（ラベル位置・幅と世界一周ルート線の端点に使う）。
+  function mainPolygonIfSplit(f, b, worldW) {
+    if (f.geometry.type !== "MultiPolygon" || b[1][0] - b[0][0] <= worldW / 2) return f;
+    let best = f, bestArea = -1;
+    for (let i = 0; i < f.geometry.coordinates.length; i++) {
+      const poly = { type: "Polygon", coordinates: f.geometry.coordinates[i] };
+      const a = geoPath.area(poly);
+      if (a > bestArea) { bestArea = a; best = poly; }
+    }
+    return best;
+  }
+  function projectedWorldWidth() {
+    const sb = geoPath.bounds({ type: "Sphere" });
+    return sb[1][0] - sb[0][0];
+  }
+
   function buildLabels(features) {
     state.labelData = [];
+    const worldW = projectedWorldWidth();
     for (let i = 0; i < features.length; i++) {
       const f = features[i];
-      const c = geoPath.centroid(f);
+      let b = geoPath.bounds(f);
+      const g = mainPolygonIfSplit(f, b, worldW);
+      if (g !== f) b = geoPath.bounds(g);
+      const c = geoPath.centroid(g);
       if (!c || isNaN(c[0])) continue;
-      const b = geoPath.bounds(f);
       state.labelData.push({ name: nameOf(f), cx: c[0], cy: c[1], w: b[1][0] - b[0][0] });
     }
   }
