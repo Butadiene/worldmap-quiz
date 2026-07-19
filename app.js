@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v38";
+  const APP_VERSION = "v39";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -1732,7 +1732,7 @@
     els.giveup.hidden = true;
     els.hint.hidden = true;
     els.promptKicker.textContent = "れんしゅう① この国はどこ？";
-    els.promptTarget.textContent = nameOf(state.byId.get(TUT_FIND));
+    setPromptTarget(nameOf(state.byId.get(TUT_FIND)));
     els.promptHint.textContent = "地図をタップ";
     fitToFeatures(state.features, true);   // プロンプトバー表示でステージが縮んだ分を再フィット
   }
@@ -1993,6 +1993,32 @@
     else askName(c);
   }
 
+  // 画面下バーの国名表示。セントビンセント・グレナディーン等の長い国名がスマホ幅で
+  // 「…」に切れないよう、収まるまでフォントを縮める（CSS の 26px を起点に 14px まで）。
+  // 改行やバーの高さ変動で地図がリサイズされるより、1行のまま縮む方が視界が安定する。
+  // それでも収まらない極狭画面（320px 級）では、canHideHint のとき飾りの「地図をタップ」
+  // ピルを隠して幅を空け、もう一度フィットさせる（キッカーの「この国はどこ？」があるので
+  // 情報は落ちない）。ピルが実情報のモード（たんけんの試行数・世界一周の手数）は隠さない。
+  // nowrap+ellipsis の CSS は最終防衛として残す。
+  function setPromptTarget(text, canHideHint) {
+    const el = els.promptTarget;
+    els.promptHint.hidden = false;             // 前問で隠していたら必ず戻す（モード切替でも安全）
+    const fit = () => {
+      el.style.fontSize = "";                  // まず CSS 既定サイズに戻す
+      let size = parseFloat(getComputedStyle(el).fontSize) || 26;
+      while (el.scrollWidth > el.clientWidth && size > 14) {
+        size -= 1;
+        el.style.fontSize = size + "px";
+      }
+      return el.scrollWidth <= el.clientWidth;
+    };
+    el.textContent = text;
+    if (!fit() && canHideHint) {
+      els.promptHint.hidden = true;
+      fit();
+    }
+  }
+
   // ---- FIND mode: show a name, tap the country ----
   function askFind(c) {
     els.choices.hidden = true;
@@ -2001,7 +2027,7 @@
     els.hint.hidden = true;
     els.promptHint.textContent = "地図をタップ";
     els.promptKicker.textContent = "この国はどこ？";
-    els.promptTarget.textContent = c.ja;
+    setPromptTarget(c.ja, true);
   }
 
   /* ============================================================
@@ -2017,7 +2043,7 @@
     els.giveup.textContent = "ギブアップ";     // 世界一周が「あきらめる」に書き換えるので戻す
     els.hint.hidden = true;
     els.promptKicker.textContent = "なぞの国はどこ？";
-    els.promptTarget.textContent = "???";
+    setPromptTarget("???");
     state.exploreGuesses = 0;
     state.exploreTried = new Set();
     state.paint = new Map();                   // 問ごとに真新しい熱マップへ張り替え（他モードへ漏れない）
@@ -2209,7 +2235,7 @@
     const gf = state.byId.get(state.journeyGoal);
     els.promptKicker.textContent = (gf ? withFlag(state.journeyGoal, nameOf(gf)) : "?") + " をめざせ！";
     const cf = state.byId.get(state.journeyCurrent);
-    els.promptTarget.textContent = cf ? nameOf(cf) : "";
+    setPromptTarget(cf ? nameOf(cf) : "");
     els.promptHint.textContent = "手数 " + state.journeyMoves + " / 目安 " + state.journeyBest;
   }
 
