@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v33";
+  const APP_VERSION = "v34";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -54,9 +54,13 @@
   // マーカーの見た目と当たり判定の半径 (CSS px)。ズームに応じてゆるやかに育てる:
   // 世界表示では控えめ（カリブ等の密集がつぶれない）、拡大するほど大きく＝陸続きの
   // ミニ国家（バチカン・サンマリノ・モナコ等）の押し間違いを減らす。
-  // log2 スケールで k=1→4px, k=2→6px, k=4→8px, k≥8 は 10px で頭打ち。
+  // 基準は t.k ではなく「世界全体表示に対する実効ズーム」worldZoom()。t.k は開始フィットを
+  // 1 とする相対値なので、ミニ国家（地中海に深く寄って開始）と太平洋の島国（ほぼ世界表示で
+  // 開始）で同じ k=1 でも実際の縮尺が全く違う — 実効ズーム基準ならどの地域から始めても
+  // 「地球にどれだけ寄っているか」で半径が一貫する。
+  // log2 スケールで 世界表示→4px, 2倍→6px, 4倍→8px, 8倍以上は 10px で頭打ち。
   // render と featureAt の両方がこの同じ関数を読む（描いた丸＝押せる丸）。
-  const microR = (t) => Math.min(10, 4 + 2.2 * Math.log2(Math.max(1, t.k)));
+  const microR = (t) => Math.min(10, 4 + 2.2 * Math.log2(Math.max(1, worldZoom(t))));
   const MICRO_TAP_PAD = 6;   // 指の太さぶんの追加許容 (半径に足す)
 
   // Finer sub-regions, keyed by ISO 3166-1 numeric so countries.js stays untouched.
@@ -241,6 +245,15 @@
   const projCentroids = new Map(); // padded id -> [x,y] projected-plane centroid (世界一周の経路線); rebuilt with paths
   const microXY = new Map();       // micro id -> [x,y] マーカーアンカーの投影面座標; buildPaths で再構築
   const microArea = new Map();     // micro id -> 実ポリゴンの投影面積 (マーカー⇄ポリゴンの切替判定); 同上
+  let worldRefScale = 1;           // この画面サイズで世界全体をフィットしたときの projection.scale()
+                                   // （worldZoom の分母; buildPaths で画面サイズに追随して再計算）
+
+  // 「世界全体表示を1とした実効ズーム」。t.k（開始フィット相対）と違い、どの地域フィットから
+  // 始めても地球に対する縮尺として一貫する。マーカー半径の基準（microR）に使う。
+  function worldZoom(t) {
+    if (!projection || !worldRefScale) return 1;
+    return (projection.scale() * (t ? t.k : 1)) / worldRefScale;
+  }
   const ADJ = new Map();           // padded id -> Set(padded id) 隣接グラフ (陸国境 topojson.neighbors + 海路 SEA_LINKS)
   // Gesture / transition blit snapshot: the last sharp frame + the transform + projection
   // generation it was drawn at (stale gen ⇒ discard, never blit).
@@ -810,6 +823,11 @@
     paths.clear();
     boundsMap.clear();
     projCentroids.clear();
+    // worldZoom の基準: 今の画面サイズで世界全体（球）をフィットしたときの scale。
+    // 使い捨ての投影で測る（本物の projection には触らない）。fit/resize のたびに更新。
+    worldRefScale = d3.geoNaturalEarth1()
+      .fitExtent([[20, 20], [Math.max(60, cssW - 20), Math.max(60, cssH - 20)]], { type: "Sphere" })
+      .scale() || 1;
     // ミニ国家マーカーのアンカーを現在の投影で置き直す（fit のたびにここへ来る）。
     microXY.clear();
     MICRO_IDS.forEach((id) => {
