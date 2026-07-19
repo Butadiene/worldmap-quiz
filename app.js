@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v40";
+  const APP_VERSION = "v41";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -1856,7 +1856,7 @@
     els.tutDoneCard.hidden = true;
     els.tutInstallCard.hidden = true;
     els.tutSkip.hidden = true;
-    els.choicesKicker.textContent = "ハイライトされた国は？";   // 借りた choices UI を返す
+    els.choicesKicker.textContent = "ハイライトされた国・地域は？";   // 借りた choices UI を返す（本編の既定文言に合わせる）
     showSetup();
   }
 
@@ -1997,7 +1997,7 @@
   // 「…」に切れないよう、収まるまでフォントを縮める（CSS の 26px を起点に 14px まで）。
   // 改行やバーの高さ変動で地図がリサイズされるより、1行のまま縮む方が視界が安定する。
   // それでも収まらない極狭画面（320px 級）では、canHideHint のとき飾りの「地図をタップ」
-  // ピルを隠して幅を空け、もう一度フィットさせる（キッカーの「この国はどこ？」があるので
+  // ピルを隠して幅を空け、もう一度フィットさせる（キッカーの「この国・地域はどこ？」があるので
   // 情報は落ちない）。ピルが実情報のモード（たんけんの試行数・世界一周の手数）は隠さない。
   // nowrap+ellipsis の CSS は最終防衛として残す。
   function setPromptTarget(text, canHideHint) {
@@ -2026,7 +2026,7 @@
     els.giveup.hidden = true;                 // たんけん / 世界一周 専用ボタン
     els.hint.hidden = true;
     els.promptHint.textContent = "地図をタップ";
-    els.promptKicker.textContent = "この国はどこ？";
+    els.promptKicker.textContent = "この国・地域はどこ？";
     setPromptTarget(c.ja, true);
   }
 
@@ -2042,7 +2042,7 @@
     els.giveup.hidden = false;
     els.giveup.textContent = "ギブアップ";     // 世界一周が「あきらめる」に書き換えるので戻す
     els.hint.hidden = true;
-    els.promptKicker.textContent = "なぞの国はどこ？";
+    els.promptKicker.textContent = "なぞの国・地域はどこ？";
     setPromptTarget("???");
     state.exploreGuesses = 0;
     state.exploreTried = new Set();
@@ -2496,7 +2496,7 @@
   function askName(c) {
     els.promptBar.hidden = true;
     els.choices.hidden = false;
-    els.choicesKicker.textContent = "ハイライトされた国は？";   // recall モードが書き換えるので戻す
+    els.choicesKicker.textContent = "ハイライトされた国・地域は？";   // recall モードが書き換えるので戻す
 
     setMark(c.id, "target");
     render();
@@ -2558,7 +2558,7 @@
     startPulse();
     focusFeature(c.feature);
 
-    els.choicesKicker.textContent = "この国の名前は？はっきり思い浮かべてみよう";
+    els.choicesKicker.textContent = "この国・地域の名前は？はっきり思い浮かべてみよう";
     els.choicesGrid.innerHTML = "";
     const btn = document.createElement("button");
     btn.className = "choice span2 recall-go";
