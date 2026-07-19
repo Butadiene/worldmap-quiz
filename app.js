@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v31";
+  const APP_VERSION = "v32";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -48,12 +48,15 @@
   };
   const MICRO_IDS = Object.keys(MICRO_POS);
   // マーカーが引っ込む閾値: 実ポリゴンの画面上サイズ sqrt(投影面積)*t.k がこの px を
-  // 超えたら（＝ポリゴン自体が見え・タップできる大きさになったら）丸をやめる。
+  // 超えたら（＝ポリゴン自体が丸より大きく見え・タップできるようになったら）丸をやめる。
   // バチカン等はどの実用ズームでも超えないので、実質いつまでも丸のまま（正しい）。
-  const MICRO_HIDE_PX = 12;
-  // マーカーの見た目と当たり判定の半径 (CSS px)。世界表示ではドットの密集を抑えるため
-  // 少し小さく描く。render と featureAt の両方がこの同じ関数を読む（描いた丸＝押せる丸）。
-  const microR = (t) => (t.k >= 3 ? 5 : 3.5);
+  const MICRO_HIDE_PX = 16;
+  // マーカーの見た目と当たり判定の半径 (CSS px)。ズームに応じてゆるやかに育てる:
+  // 世界表示では控えめ（カリブ等の密集がつぶれない）、拡大するほど大きく＝陸続きの
+  // ミニ国家（バチカン・サンマリノ・モナコ等）の押し間違いを減らす。
+  // log2 スケールで k=1→4px, k=2→6px, k=4→8px, k≥8 は 10px で頭打ち。
+  // render と featureAt の両方がこの同じ関数を読む（描いた丸＝押せる丸）。
+  const microR = (t) => Math.min(10, 4 + 2.2 * Math.log2(Math.max(1, t.k)));
   const MICRO_TAP_PAD = 6;   // 指の太さぶんの追加許容 (半径に足す)
 
   // Finer sub-regions, keyed by ISO 3166-1 numeric so countries.js stays untouched.
@@ -1174,11 +1177,12 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.lineJoin = "round";
+      const microDy = microR(t) + 9;                       // 丸の成長に合わせてラベルも下へ
       for (let i = 0; i < state.labelData.length; i++) {
         const L = state.labelData[i];
         if (L.w * t.k < 24) continue;                      // too small to label yet
         const x = t.x + t.k * L.cx;
-        const y = t.y + t.k * L.cy + (L.micro ? 13 : 0);   // ミニ国家は丸マーカーの下に
+        const y = t.y + t.k * L.cy + (L.micro ? microDy : 0);   // ミニ国家は丸マーカーの下に
         if (x < -60 || x > cssW + 60 || y < -16 || y > cssH + 16) continue;
         ctx.lineWidth = 3;
         ctx.strokeStyle = "rgba(255,255,255,.9)";
