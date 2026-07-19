@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v34";
+  const APP_VERSION = "v35";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -58,9 +58,9 @@
   // 1 とする相対値なので、ミニ国家（地中海に深く寄って開始）と太平洋の島国（ほぼ世界表示で
   // 開始）で同じ k=1 でも実際の縮尺が全く違う — 実効ズーム基準ならどの地域から始めても
   // 「地球にどれだけ寄っているか」で半径が一貫する。
-  // log2 スケールで 世界表示→4px, 2倍→6px, 4倍→8px, 8倍以上は 10px で頭打ち。
+  // log2 スケールで 世界表示→3px, 2倍→5.2px, 4倍→7.4px, 約9倍以上は 10px で頭打ち。
   // render と featureAt の両方がこの同じ関数を読む（描いた丸＝押せる丸）。
-  const microR = (t) => Math.min(10, 4 + 2.2 * Math.log2(Math.max(1, worldZoom(t))));
+  const microR = (t) => Math.min(10, 3 + 2.2 * Math.log2(Math.max(1, worldZoom(t))));
   const MICRO_TAP_PAD = 6;   // 指の太さぶんの追加許容 (半径に足す)
 
   // Finer sub-regions, keyed by ISO 3166-1 numeric so countries.js stays untouched.
