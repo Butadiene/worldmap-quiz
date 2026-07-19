@@ -67,7 +67,10 @@ python3 -m http.server 8000
 
 ## データの出典・技術
 
-- 地図: [world-atlas](https://github.com/topojson/world-atlas)（Natural Earth 由来）
+- 地図: [world-atlas](https://github.com/topojson/world-atlas)（Natural Earth 由来）を基に、
+  日本でひろく使われる地図表現に合わせて一部の係争地の区分を調整した自前データ
+  （北方領土=日本、クリミア=ウクライナ。生成スクリプトは `tools/make-jpn-pov.cjs`、
+  `app.js`/`sw.js` の `MAP_POV` 定数で元の world-atlas 版にすぐ戻せます）
 - 描画: [D3.js](https://d3js.org/) + [TopoJSON](https://github.com/topojson/topojson-client)（CDNから読み込み、初回にキャッシュ）
 - 収録国数: 200の国と地域（バチカン市国などのミニ国家は丸マーカーで表示）
 

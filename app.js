@@ -6,10 +6,22 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v41";
+  const APP_VERSION = "v42";
 
-  const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
-  const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
+  // 地図データの視点 (POV)。"jpn" = 日本視点: world-atlas を基に、北方領土を日本領・
+  // クリミアをウクライナ領へ振り替えた自前ホストのデータ (tools/make-jpn-pov.cjs で生成)。
+  // "default" = Natural Earth 既定の実効支配ベース (world-atlas CDN そのまま)。
+  // 【戻し方】この1行を "default" にし、sw.js の MAP_POV も合わせて CACHE を1つ上げるだけ。
+  const MAP_POV = "jpn";
+  const WORLD_URLS = {
+    jpn: { hi: "countries-50m-jpn.json", low: "countries-110m-jpn.json" },
+    default: {
+      hi: "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json",
+      low: "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+    },
+  };
+  const WORLD_URL = WORLD_URLS[MAP_POV].hi;
+  const WORLD_URL_LOW = WORLD_URLS[MAP_POV].low;  // LOD 低詳細 (Run 13)
 
   const REGION_LABEL = {
     all: "世界全体", asia: "アジア", europe: "ヨーロッパ", africa: "アフリカ",

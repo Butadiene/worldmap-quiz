@@ -1,6 +1,10 @@
 /* Service worker — offline caching for 世界地図クイズ
    Bump CACHE version to force an update after changing files. */
-const CACHE = "worldquiz-v41";
+const CACHE = "worldquiz-v42";
+
+// 地図データの視点 (POV)。app.js の MAP_POV と必ず一致させること。
+// "jpn" = 自前ホストの日本視点データ / "default" = world-atlas CDN。
+const MAP_POV = "jpn";
 
 const LOCAL_ASSETS = [
   "./",
@@ -12,14 +16,15 @@ const LOCAL_ASSETS = [
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-];
+].concat(MAP_POV === "jpn" ? ["./countries-50m-jpn.json", "./countries-110m-jpn.json"] : []);
 
 const CDN_ASSETS = [
   "https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js",
   "https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js",
+].concat(MAP_POV === "default" ? [
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json",
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
-];
+] : []);
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
