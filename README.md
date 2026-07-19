@@ -73,6 +73,7 @@ python3 -m http.server 8000
   `app.js`/`sw.js` の `MAP_POV` 定数で元の world-atlas 版にすぐ戻せます）
 - 描画: [D3.js](https://d3js.org/) + [TopoJSON](https://github.com/topojson/topojson-client)（CDNから読み込み、初回にキャッシュ）
 - 収録国数: 200の国と地域（バチカン市国などのミニ国家は丸マーカーで表示）
+- ライセンス表記: 同梱データの出典・許諾は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照
 
 ## カスタマイズのヒント
 
