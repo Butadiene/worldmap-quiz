@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v37";
+  const APP_VERSION = "v38";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -203,7 +203,8 @@
     journeyLeg: 0,      // 世界一周: 完了した旅の数（0..3）
     journeyStars: 0,    // 世界一周: 獲得した☆の合計
     journeyShortest: 0, // 世界一周: 最短手数で到達した旅の数
-    stats: {},          // padded id -> { c: 正解数, w: 誤答数, last: 最終出題epochMs }
+    stats: {},          // padded id -> { c: 正解数, w: 誤答数, last: 最終出題epochMs,
+                        //   h: 直近の正誤履歴 [0|1] 新しいものが末尾・最大 HISTORY_MAX 件（習得判定用） }
     reasks: {},         // padded id -> このセッションで再挿入した回数
     locked: false, fittedFeatures: null,
     marks: new Map(),   // padded id -> "target" | "correct" | "wrong" | "hi"
@@ -422,6 +423,7 @@
     state.stats = store.get(STATS_KEY, {});
     // Guard against a corrupted / hand-edited store (array, string, null…): stats must be a plain object.
     if (!state.stats || typeof state.stats !== "object" || Array.isArray(state.stats)) state.stats = {};
+    migrateStats(state.stats);
     wireSetup();
     applySavedSettings(store.get(SETTINGS_KEY, null));
     updateSettingsSummary();
@@ -693,15 +695,41 @@
     COLORS.journeyPath = g("--journey-path", "#7fc6cd");
   }
 
-  // Bucket a country by its recorded performance → a fill color, or null for "not seen yet".
+  // 習得判定は「直近の成績」で行う (v38)。生涯累計 c/w だと、昔間違え続けた国は
+  // その後に覚えても正答率が沈んだままでグレードが上がらない。国ごとに直近の
+  // 正誤履歴 s.h (1=正解/0=誤答, 新しいものが末尾) を持ち、末尾 MASTERY_WINDOW 件の
+  // 正答率で色分けする。窓が6なのは: 5連続正解すれば過去のどんな連敗からでも習得に
+  // 届き（[誤,正,正,正,正,正]=83%）、習得後に1回ミスしても5/6で緑を保てる応答性。
+  // c/w の生涯累計は解説パネルの表示と出題重み (weightFor) 用に残す。
+  const MASTERY_WINDOW = 6;    // 色分けに使う直近の回答数
+  const HISTORY_MAX = 20;      // h に保持する上限（窓の将来調整に備えて余分に持つ）
+
+  // v1 (c/w のみ) の保存データへ h を後付けする一度きりの移行。並びは復元できないので
+  // 生涯正答率を窓サイズに比例配分し、誤答を古い側に置く（=誤答が先に窓から抜ける、
+  // プレイヤーに有利な仮定）。
+  function migrateStats(stats) {
+    for (const id in stats) {
+      const s = stats[id];
+      if (!s || typeof s !== "object" || Array.isArray(s.h)) continue;
+      const c = s.c | 0, w = s.w | 0;
+      const total = Math.min(MASTERY_WINDOW, c + w);
+      if (!total) { s.h = []; continue; }
+      const ones = Math.round(total * (c / (c + w)));
+      s.h = Array(total - ones).fill(0).concat(Array(ones).fill(1));
+    }
+  }
+
+  // Bucket a country by its recent performance → a fill color, or null for "not seen yet".
   function masteryColor(id) {
     const s = state.stats[id];
-    const seen = s ? s.c + s.w : 0;
-    if (!seen) return null;                          // no record → default land color
-    const rate = s.c / seen;
-    if (rate >= 0.8 && seen >= 2) return COLORS.mGood;  // 習得: solid & practiced
-    if (rate >= 0.5) return COLORS.mMid;                // 学習中
-    return COLORS.mWeak;                                // 苦手
+    if (!s) return null;
+    const h = s.h || [];
+    if (!h.length) return (s.c | 0) + (s.w | 0) ? COLORS.mMid : null;   // 移行漏れの保険
+    const recent = h.slice(-MASTERY_WINDOW);
+    const rate = recent.reduce((a, b) => a + b, 0) / recent.length;
+    if (rate >= 0.8 && recent.length >= 2) return COLORS.mGood;  // 習得: 直近が安定して正解
+    if (rate >= 0.5) return COLORS.mMid;                         // 学習中
+    return COLORS.mWeak;                                         // 苦手
   }
 
   // 習得数 = masteryColor が good バケット（正答率≥0.8 かつ seen≥2）に入る国の数。
@@ -711,10 +739,11 @@
     return n;
   }
 
-  // 習得数に応じた七段階の称号（しきい値は習得国数）。
+  // 習得数に応じた八段階の称号（しきい値は習得国数）。収録200か国に合わせて再編 (v38)。
   const RANK_TIERS = [
-    { min: 170, name: "世界マスター" },
-    { min: 140, name: "世界の達人" },
+    { min: 200, name: "全国家制覇" },
+    { min: 185, name: "世界マスター" },
+    { min: 150, name: "世界の達人" },
     { min: 100, name: "地理博士" },
     { min: 60, name: "冒険家" },
     { min: 30, name: "旅人" },
@@ -2567,10 +2596,14 @@
   function scoreWrong(id) { state.streak = 0; state.answered++; state.mistakes.push(id); buzz(60); soundWrong(); updateStats(); }
 
   // Persist a per-country tally. Called only from finishTurn to avoid double counting.
+  // c/w は生涯累計（表示・出題重み用）、h は直近履歴（習得判定用, masteryColor 参照）。
   function recordAnswer(id, correct) {
     let s = state.stats[id];
-    if (!s) { s = { c: 0, w: 0, last: 0 }; state.stats[id] = s; }
+    if (!s) { s = { c: 0, w: 0, last: 0, h: [] }; state.stats[id] = s; }
     if (correct) s.c++; else s.w++;
+    if (!Array.isArray(s.h)) s.h = [];
+    s.h.push(correct ? 1 : 0);
+    if (s.h.length > HISTORY_MAX) s.h.splice(0, s.h.length - HISTORY_MAX);
     s.last = Date.now();
     store.set(STATS_KEY, state.stats);
   }
@@ -2738,8 +2771,12 @@
     if (state.progressView) {
       const s = state.stats[id];
       const seen = s ? s.c + s.w : 0;
+      // 色分けは直近成績で決まる（masteryColor）ので、その根拠をここでも見せる。
+      const recent = s && Array.isArray(s.h) ? s.h.slice(-MASTERY_WINDOW) : [];
+      const rsum = recent.reduce((a, b) => a + b, 0);
       els.explainStats.textContent = seen
-        ? "正解 " + s.c + "回 / まちがい " + s.w + "回（正答率 " + Math.round((s.c / seen) * 100) + "%）"
+        ? "正解 " + s.c + "回 / まちがい " + s.w + "回"
+          + (recent.length ? "（直近" + recent.length + "回中 " + rsum + "回正解）" : "")
         : "まだ出題されていません";
       els.explainStats.hidden = false;
     } else {
