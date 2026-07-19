@@ -1,0 +1,23 @@
+name: 💡 ご意見・ご要望
+description: 新機能の提案、使い勝手の感想、「この国の解説が変」などはこちら
+title: "[要望] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ご意見ありがとうございます！小さなことでも大歓迎です。
+  - type: textarea
+    id: idea
+    attributes:
+      label: 内容
+      placeholder: |
+        例）出題モードに「首都を当てる」がほしいです
+        例）〇〇の解説文がまちがっているようです（正しくは…）
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 補足（あれば）
+      placeholder: どんな場面でそう感じたか、参考リンクなど

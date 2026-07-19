@@ -1,0 +1,43 @@
+name: 🐛 不具合の報告
+description: 動作がおかしい・表示が崩れる・タップできない等の報告はこちら
+title: "[不具合] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ご報告ありがとうございます！β版の改善にとても役立ちます。
+        わかる範囲で大丈夫ですので、以下を教えてください。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きましたか？
+      description: 起きたことをそのまま書いてください（スクリーンショットがあれば貼り付け大歓迎です）
+      placeholder: 例）カリブの地域を選んでスタートすると、国名が「…」で切れて読めません
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順（わかれば）
+      placeholder: |
+        例）
+        1. 「地図で探す」を選ぶ
+        2. アメリカ → カリブ を選んでスタート
+        3. 長い国名の問題が出ると発生
+  - type: input
+    id: device
+    attributes:
+      label: 機種・OS
+      placeholder: 例）iPhone 13 (iOS 18) / Pixel 8 (Android 15) / Windows 11 PC
+  - type: input
+    id: browser
+    attributes:
+      label: ブラウザ / 開き方
+      placeholder: 例）Safari / Chrome / ホーム画面に追加したアプリから
+  - type: input
+    id: version
+    attributes:
+      label: アプリのバージョン
+      description: 設定画面の「オフライン準備完了」の下に小さく表示されています（例 v40）
+      placeholder: 例）v40
