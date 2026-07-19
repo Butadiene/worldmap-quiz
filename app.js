@@ -6,10 +6,12 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v42";
+  const APP_VERSION = "v43";
 
-  // 地図データの視点 (POV)。"jpn" = 日本視点: world-atlas を基に、北方領土を日本領・
-  // クリミアをウクライナ領へ振り替えた自前ホストのデータ (tools/make-jpn-pov.cjs で生成)。
+  // 地図データの視点 (POV)。"jpn" = 日本視点: world-atlas を基に、係争地の帰属を
+  // Natural Earth 公式の日本視点データ (ne_10m_admin_0_countries_jpn) に合わせた
+  // 自前ホストのデータ (tools/make-jpn-pov.cjs で生成。北方領土→日本、クリミア→
+  // ウクライナ、ソマリランド→ソマリア、北キプロス→キプロス、シアチェン→インド)。
   // "default" = Natural Earth 既定の実効支配ベース (world-atlas CDN そのまま)。
   // 【戻し方】この1行を "default" にし、sw.js の MAP_POV も合わせて CACHE を1つ上げるだけ。
   const MAP_POV = "jpn";
@@ -190,7 +192,7 @@
   // ---- state ----
   const state = {
     features: [],       // renderable GeoJSON features that have Japanese data
-    inertFeatures: [],  // id なしジオメトリ (Somaliland/Kosovo/N.Cyprus 等): 陸として描くだけの無反応領域
+    inertFeatures: [],  // id なしジオメトリ (Kosovo/Indian Ocean Ter.): 陸として描くだけの無反応領域
     byId: new Map(),    // padded id -> feature
     allCountries: [],   // {id, ja, region, feature} for every renderable country (distractor source)
     pool: [],           // {id, ja, region, feature} for current settings
@@ -535,8 +537,9 @@
     state.byId.clear();
     const polysOf = (g) => (g.type === "Polygon" ? [g.coordinates] : g.coordinates);
     geo.features.forEach((f) => {
-      // id なしジオメトリ (50m データの Somaliland/Kosovo/N. Cyprus/Indian Ocean Ter./Siachen
-      // Glacier) は捨てず、見た目だけ普通の陸として描く無反応領域として収集する。pool/paths/
+      // id なしジオメトリ (jpn 50m データでは Kosovo/Indian Ocean Ter. の2つ。Somaliland/
+      // N. Cyprus/Siachen は v43 で日本視点の帰属先へ統合済み) は捨てず、見た目だけ普通の
+      // 陸として描く無反応領域として収集する。pool/paths/
       // hit-test/centroid/ADJ には一切入れない（id 付きで COUNTRY_DATA に無い海外領土は従来どおりスキップ）。
       if (f.id == null) { state.inertFeatures.push(f); return; }
       if (!dataFor(f.id)) return;           // keep only countries we have JP names for

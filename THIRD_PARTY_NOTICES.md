@@ -5,7 +5,10 @@
 本リポジトリに同梱している地図データは、
 [world-atlas](https://github.com/topojson/world-atlas)（Natural Earth の TopoJSON 版）の
 `countries-50m.json` / `countries-110m.json` を基に、`tools/make-jpn-pov.cjs` で
-一部の係争地の帰属区分を調整（北方領土 → 日本、クリミア半島 → ウクライナ）した派生物です。
+係争地の帰属区分を Natural Earth 公式の日本視点データ
+（`ne_10m_admin_0_countries_jpn`。POV 系列は 10m スケールのみ配布）に合わせた派生物です
+（北方領土 → 日本、クリミア半島 → ウクライナ、ソマリランド → ソマリア、
+北キプロス → キプロス、シアチェン氷河 → インド）。
 
 ### Natural Earth（元データ）
 
