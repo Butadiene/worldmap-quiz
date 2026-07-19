@@ -1,8 +1,13 @@
-# 世界地図クイズ 🌍
+# 世界地図クイズ 🌍（β版）
 
 白地図で世界の国の「位置」と「名前」を覚えるためのクイズアプリです。
 **PWA(Webアプリ)** なので、スマホ（Android / iPhone）でもPCでも動き、
 **一度オンラインで開けば、以降はオフラインでも遊べます。**
+
+**▶ 遊ぶ: https://butadiene.github.io/worldmap-quiz/**
+
+現在 **β版（テスト公開中）** です。不具合の報告やご意見・ご要望は
+[Issues](https://github.com/Butadiene/worldmap-quiz/issues) へお寄せください。
 
 ## 遊び方
 

@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v39";
+  const APP_VERSION = "v40";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)

@@ -378,6 +378,22 @@ body {
 .setup-foot.online { color: var(--correct); }
 .setup-foot.offline { color: var(--ink-faint); }
 .setup-version { text-align: center; font-size: 10px; color: var(--ink-faint); opacity: .7; margin: 4px 0 0; }
+/* β バッジ（トップバーのブランド名と設定カードのタイトル横） */
+.beta-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 999px;
+  background: var(--primary-tint); color: var(--primary);
+  font-size: 10px; font-weight: 800; letter-spacing: .08em; vertical-align: middle;
+}
+.setup-title .beta-badge { font-size: 13px; margin-left: 8px; }
+
+/* β版フィードバック誘導（GitHub Issues へ） */
+.setup-feedback {
+  background: #fdf7ec; border-radius: 12px; padding: 10px 12px; margin: 14px 0 0;
+  font-size: 11px; color: var(--ink-soft); line-height: 1.8;
+}
+.setup-feedback p { margin: 0; }
+.setup-feedback a { color: var(--primary); font-weight: 700; }
+
 /* ホーム画面に追加（PWA インストール）の案内カード */
 .setup-install {
   background: #f6f9fa; border-radius: 12px; padding: 10px 12px; margin: 14px 0 0;

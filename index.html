@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0e7c86" />
   <title>世界地図クイズ</title>
+  <meta name="description" content="白地図で世界の国の「位置」と「名前」を覚える無料クイズアプリ。200の国と地域を収録、オフライン対応のPWAです。" />
+  <!-- OGP: リンク共有時のカード表示（URL は GitHub Pages のデプロイ先） -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="世界地図クイズ（β） — 白地図で国を覚える" />
+  <meta property="og:description" content="地図をタップして国を当てる無料学習アプリ。200の国と地域・オフライン対応・インストール不要。" />
+  <meta property="og:url" content="https://butadiene.github.io/worldmap-quiz/" />
+  <meta property="og:image" content="https://butadiene.github.io/worldmap-quiz/icons/icon-512.png" />
+  <meta name="twitter:card" content="summary" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -17,6 +25,7 @@
       <div class="brand">
         <span class="brand-mark">◵</span>
         <span class="brand-name">世界地図クイズ</span>
+        <span class="beta-badge">β</span>
       </div>
       <div class="stats" id="stats" hidden>
         <div class="stat" id="lives-stat" hidden>
@@ -119,7 +128,7 @@
     <div class="overlay setup" id="setup">
       <div class="setup-card">
         <p class="setup-eyebrow">白地図で国を覚える</p>
-        <h1 class="setup-title">世界地図クイズ</h1>
+        <h1 class="setup-title">世界地図クイズ<span class="beta-badge">β</span></h1>
         <p class="setup-lede">地図をタップして国を当てるか、光った国の名前を選ぶ。オフラインでもくり返し練習できます。</p>
         <div class="setup-credit">
           <p>地図データ: <a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a>（出典: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>・パブリックドメイン）にもとづき、収録する国・地域の範囲（200の国と地域）と国境線もこのデータの基準に従っています。日本語の国名表記・首都・解説文は本アプリ独自の編集です。</p>
@@ -224,6 +233,9 @@
         <p class="setup-foot" id="offline-badge">● オフライン準備完了</p>
         <p class="setup-version" id="app-version"></p>
         <button class="tut-replay" id="tutorial-replay">🎓 チュートリアルをもう一度見る</button>
+        <div class="setup-feedback">
+          <p>🚧 このアプリは<b>β版（テスト公開中）</b>です。不具合の報告や「この国の解説が変」などのご意見・ご要望は、<a href="https://github.com/Butadiene/worldmap-quiz/issues" target="_blank" rel="noopener">GitHub の Issue ページ</a>へお寄せください。</p>
+        </div>
         <div class="setup-install">
           <p><b>📲 ホーム画面に追加すると、アプリのように使えます</b>（オフライン対応・更新は自動で反映）</p>
           <p>Android（Chrome など）: メニュー ⋮ →「ホーム画面に追加」<br>
