@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v32";
+  const APP_VERSION = "v33";
 
   const WORLD_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
   const WORLD_URL_LOW = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";  // LOD 低詳細 (Run 13)
@@ -74,7 +74,7 @@
     // ヨーロッパのミニ国家だけを集中的に覚える専用枠。south/west_europe と id が重複する
     // ため skipRev（下の SUBREGION_OF 逆引きから除外: 誤答選択肢のリングは地理的な
     // サブ地域を使う）。
-    micro_europe:    { label: "ミニ国家",       ids: ["020","336","438","470","492","674"], skipRev: true },
+    micro_europe:    { label: "ミニ国家（microstate）", ids: ["020","336","438","470","492","674"], skipRev: true },
 
     north_africa:    { label: "北アフリカ",     ids: ["012","434","504","729","732","788","818"] },
     west_africa:     { label: "西アフリカ",     ids: ["132","204","270","288","324","384","430","466","478","562","566","624","686","694","768","854"] },
