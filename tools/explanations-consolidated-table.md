@@ -17,7 +17,7 @@
 - 各地域の表は、適用済みの優先度Aを先頭にまとめ、その後に未適用の優先度B・その他102件をID順で並べている。
 - **★**（方針・理由欄）— ユーザーが好みの例として挙げた14件。現行文の核を残して磨いた案。
 - 優先度B分の「前回B案」（地理学習優先の旧案）は本表では省略。比較したい場合は[元の文書](explanations-b-reproposal.md)を参照。
-- 優先度B・その他102件の各行の[根拠]リンクと、優先度Aの理由欄の（S番号）は、巻末「根拠資料」の確認資料を指す。
+- 各行の「提案・適用文」末尾の[根拠]リンクは、政府・国際機関・公的機関などの確認資料（巻末「根拠資料」にまとめて掲載）。優先度A分はS番号のラベル（複数資料はS25a/S25bのように分割）。前回の改善案の方針どおり、一般的な地形・隣接関係だけのA案には個別出典が付いていない。
 - このほか優先度Aと同時に、首都欄（`cap`）の2件（赤道ギニア・南アフリカ）も適用済み（詳細は[前回の改善案](explanations-improvement-proposals.md)）。
 
 ## 南北アメリカ（38件 = A 6件＋B 16件＋その他 16件）
@@ -25,9 +25,9 @@
 | ID | 国・地域 | 区分 | 変更前／現行の文 | 提案・適用文 | 方針・理由 |
 |---|---|---|---|---|---|
 | 044 | バハマ | 優先度A（適用済み） | カリブ海に浮かぶ700以上の島々からなる。 | フロリダ半島の南東、大西洋に約700の島と多数の岩礁が連なる。 | バハマはカリブ海ではなく、その北側の大西洋に位置する。 |
-| 188 | コスタリカ | 優先度A（適用済み） | 中米の「自然大国」。軍隊を持たない国。 | カリブ海と太平洋に面し、1949年に常備軍を廃止した。 | 主観的な呼称を外し、「軍隊を持たない」を憲法上の内容に近い表現へ直す。（S1） |
-| 238 | フォークランド諸島 | 優先度A（適用済み） | 南大西洋の英国領。領有をめぐる紛争があった。 | 南大西洋で英国が実効統治する海外領土。アルゼンチンも領有権を主張する。 | 主権をめぐる対立は過去形ではなく現在も続いているため、中立的な現在形にする。（S2） |
-| 304 | グリーンランド | 優先度A（適用済み） | 世界最大の島。大半が氷床。デンマーク領。 | 世界最大の島で、大半が氷床に覆われる。デンマーク王国内で自治を行う。 | 単なる「領」とせず、自治政府を持つ現在の位置付けを示す。（S3） |
+| 188 | コスタリカ | 優先度A（適用済み） | 中米の「自然大国」。軍隊を持たない国。 | カリブ海と太平洋に面し、1949年に常備軍を廃止した。 [根拠][S1] | 主観的な呼称を外し、「軍隊を持たない」を憲法上の内容に近い表現へ直す。 |
+| 238 | フォークランド諸島 | 優先度A（適用済み） | 南大西洋の英国領。領有をめぐる紛争があった。 | 南大西洋で英国が実効統治する海外領土。アルゼンチンも領有権を主張する。 [根拠][S2] | 主権をめぐる対立は過去形ではなく現在も続いているため、中立的な現在形にする。 |
+| 304 | グリーンランド | 優先度A（適用済み） | 世界最大の島。大半が氷床。デンマーク領。 | 世界最大の島で、大半が氷床に覆われる。デンマーク王国内で自治を行う。 [根拠][S3] | 単なる「領」とせず、自治政府を持つ現在の位置付けを示す。 |
 | 332 | ハイチ | 優先度A（適用済み） | イスパニョーラ島西側。中南米初の独立黒人共和国。 | イスパニョーラ島西部を占め、1804年に中南米で最初に独立した。 | 語の係り方が曖昧な後半を、年と出来事が明確な表現にする。 |
 | 659 | セントクリストファー・ネービス | 優先度A（適用済み） | 南北アメリカ大陸で最小の国。2つの島からなる。 | 2つの主島からなり、面積・人口ともに西半球最小の独立国。 | 島国なので「大陸で」は不自然。比較範囲と基準も明確にする。 |
 | 028 | アンティグア・バーブーダ | 優先度B | カリブ海東部。アンティグア島とバーブーダ島からなる。 | 英国海軍の旧造船所と関連遺跡群は、奴隷労働の歴史も伝える世界遺産。[根拠][B028] | 島の構成から、植民地史を伝える文化遺産へ。 |
@@ -68,12 +68,12 @@
 | ID | 国・地域 | 区分 | 変更前／現行の文 | 提案・適用文 | 方針・理由 |
 |---|---|---|---|---|---|
 | 040 | オーストリア | 優先度A（適用済み） | アルプスの音楽の都。モーツァルトゆかりの地。 | 国土の多くをアルプスが占め、首都ウィーンは音楽の都として知られる。 | 国全体を都市のように表した主語の混同を直す。 |
-| 056 | ベルギー | 優先度A（適用済み） | EU本部が置かれる。ワッフルとチョコで有名。 | 3つの公用語を持ち、ブリュッセルにEUの主要機関が集まる。 | EUには単一の「本部」があるわけではないため、制度に合う表現にする。（S5） |
-| 112 | ベラルーシ | 優先度A（適用済み） | 東欧の内陸国。ロシアとポーランドに挟まれる。 | ポーランド国境の世界遺産「ビャウォヴィエジャの森」には、ヨーロッパバイソンが生息する。 | 白地図だけでは分からない、国境をまたぐ原生林と代表的な野生動物を紹介する。（S24） |
+| 056 | ベルギー | 優先度A（適用済み） | EU本部が置かれる。ワッフルとチョコで有名。 | 3つの公用語を持ち、ブリュッセルにEUの主要機関が集まる。 [根拠][S5] | EUには単一の「本部」があるわけではないため、制度に合う表現にする。 |
+| 112 | ベラルーシ | 優先度A（適用済み） | 東欧の内陸国。ロシアとポーランドに挟まれる。 | ポーランド国境の世界遺産「ビャウォヴィエジャの森」には、ヨーロッパバイソンが生息する。 [根拠][S24] | 白地図だけでは分からない、国境をまたぐ原生林と代表的な野生動物を紹介する。 |
 | 246 | フィンランド | 優先度A（適用済み） | 森と湖の国。サウナ発祥の地。 | 森林と湖が多い北欧の国。サウナ文化で知られる。 | 起源を厳密に一国へ断定せず、強い文化的な結び付きとして表す。 |
 | 300 | ギリシャ | 優先度A（適用済み） | 民主主義と古代文明の発祥地。多くの島を持つ。 | 古代ギリシャ文明が栄え、エーゲ海とイオニア海に多くの島を持つ。 | 「古代文明全体の発祥地」と読める過大な一般化を避け、海域を示す。 |
-| 372 | アイルランド | 優先度A（適用済み） | 大西洋の島国。緑の風景とギネスで有名。 | アイルランド語と英語を公用語とし、世界で唯一、楽器のハープを国章に用いる。 | 特定ブランドではなく、言語と世界でも珍しい国章の特徴を紹介する。（S26） |
-| 752 | スウェーデン | 優先度A（適用済み） | 多くの島からなる北欧最大の国。ノーベル賞の国。 | 国土の約7割を森林が占め、北極圏では夏に太陽が沈まない白夜が続く。 | 曖昧な比較を避け、白地図からは分からない自然と季節の特徴を紹介する。（S25） |
+| 372 | アイルランド | 優先度A（適用済み） | 大西洋の島国。緑の風景とギネスで有名。 | アイルランド語と英語を公用語とし、世界で唯一、楽器のハープを国章に用いる。 [根拠][S26a] [根拠][S26b] | 特定ブランドではなく、言語と世界でも珍しい国章の特徴を紹介する。 |
+| 752 | スウェーデン | 優先度A（適用済み） | 多くの島からなる北欧最大の国。ノーベル賞の国。 | 国土の約7割を森林が占め、北極圏では夏に太陽が沈まない白夜が続く。 [根拠][S25a] [根拠][S25b] | 曖昧な比較を避け、白地図からは分からない自然と季節の特徴を紹介する。 |
 | 826 | イギリス | 優先度A（適用済み） | 産業革命発祥。四つの地域からなる島国。 | グレートブリテン島とアイルランド島北東部などからなり、4つの構成国を持つ。 | 「四つの地域」を「構成国」に直し、国土が一つの島だけではないことも明確にする。 |
 | 008 | アルバニア | その他102件 | バルカン半島西部、アドリア海に面する。 | 二つの独唱声部に合唱の持続音を重ねる「イソ・ポリフォニー」は、ユネスコ無形文化遺産。[根拠][R008] | 海岸の位置から、独特な多声音楽へ。 |
 | 020 | アンドラ | その他102件 | ピレネー山脈の中、フランスとスペインに挟まれた小国。 | フランス大統領とスペインのウルヘル司教が、二人の「共同公」として国家元首を務める。[根拠][R020] | 山中の小国という説明から、独特な共同元首制度へ。 |
@@ -116,13 +116,13 @@
 
 | ID | 国・地域 | 区分 | 変更前／現行の文 | 提案・適用文 | 方針・理由 |
 |---|---|---|---|---|---|
-| 108 | ブルンジ | 優先度A（適用済み） | アフリカ中央部の内陸国。タンガニーカ湖に接する。 | 東アフリカの内陸国。タンガニーカ湖に面する。 | 国連M49の地域区分では東アフリカに入る。（S14） |
-| 148 | チャド | 優先度A（適用済み） | サハラ南縁の内陸国。チャド湖が縮小している。 | 北部はサハラ、南部はサバンナ。西端に浅く面積変動の大きいチャド湖がある。 | 湖の長期変化は複雑で、現在進行形で縮小し続けているとの断定を避ける。（S15） |
+| 108 | ブルンジ | 優先度A（適用済み） | アフリカ中央部の内陸国。タンガニーカ湖に接する。 | 東アフリカの内陸国。タンガニーカ湖に面する。 [根拠][S14] | 国連M49の地域区分では東アフリカに入る。 |
+| 148 | チャド | 優先度A（適用済み） | サハラ南縁の内陸国。チャド湖が縮小している。 | 北部はサハラ、南部はサバンナ。西端に浅く面積変動の大きいチャド湖がある。 [根拠][S15] | 湖の長期変化は複雑で、現在進行形で縮小し続けているとの断定を避ける。 |
 | 270 | ガンビア | 優先度A（適用済み） | アフリカ大陸最小の国。セネガルに囲まれる。 | ガンビア川沿いに細長く延び、三方をセネガルに囲まれるアフリカ大陸本土最小の国。 | 西は大西洋に開くため「囲まれる」を直し、島国を除く比較だと明示する。 |
-| 430 | リベリア | 優先度A（適用済み） | 解放奴隷が建国した西アフリカの国。 | 米国から移住した解放奴隷・自由黒人らを中心に成立し、1847年に独立。 | 自由出生者も含む歴史を反映し、「解放奴隷だけが建国」と読める単純化を避ける。（S17） |
-| 646 | ルワンダ | 優先度A（適用済み） | 「千の丘の国」と呼ばれる中央アフリカの内陸国。 | 「千の丘の国」と呼ばれる東アフリカの内陸国。 | 国連M49と東アフリカ共同体の区分に合う地域名へ直す。（S14） |
-| 686 | セネガル | 優先度A（適用済み） | アフリカ大陸最西端。ダカールラリーの地。 | アフリカ大陸本土の最西端。国土の中央にガンビアが細長く入り込む。 | 「本土」を補い、現在は当地で開かれないラリーを地図上の特徴に替える。（S18） |
-| 732 | 西サハラ | 優先度A（適用済み） | 帰属をめぐり係争中の砂漠地域。 | 国連の非自治地域に残り、帰属をめぐる対立が続く砂漠地域。 | 単なる国境係争ではない国連上の地位を、中立的に示す。（S20） |
+| 430 | リベリア | 優先度A（適用済み） | 解放奴隷が建国した西アフリカの国。 | 米国から移住した解放奴隷・自由黒人らを中心に成立し、1847年に独立。 [根拠][S17] | 自由出生者も含む歴史を反映し、「解放奴隷だけが建国」と読める単純化を避ける。 |
+| 646 | ルワンダ | 優先度A（適用済み） | 「千の丘の国」と呼ばれる中央アフリカの内陸国。 | 「千の丘の国」と呼ばれる東アフリカの内陸国。 [根拠][S14] | 国連M49と東アフリカ共同体の区分に合う地域名へ直す。 |
+| 686 | セネガル | 優先度A（適用済み） | アフリカ大陸最西端。ダカールラリーの地。 | アフリカ大陸本土の最西端。国土の中央にガンビアが細長く入り込む。 [根拠][S18] | 「本土」を補い、現在は当地で開かれないラリーを地図上の特徴に替える。 |
+| 732 | 西サハラ | 優先度A（適用済み） | 帰属をめぐり係争中の砂漠地域。 | 国連の非自治地域に残り、帰属をめぐる対立が続く砂漠地域。 [根拠][S20] | 単なる国境係争ではない国連上の地位を、中立的に示す。 |
 | 894 | ザンビア | 優先度A（適用済み） | ビクトリア滝を持つ南部アフリカの内陸国。 | 内陸国で、南隣のジンバブエとの国境にビクトリア滝がある。 | 滝が二国の国境上にあることを示し、アプリのM49区分（東アフリカ）と矛盾して見える地域名を避ける。 |
 | 012 | アルジェリア | その他102件 | アフリカ最大の面積を持つ国。大半がサハラ砂漠。 | 愛・自由・社会的圧力などを率直に歌う大衆音楽「ライ」は、ユネスコ無形文化遺産。[根拠][R-AF01] | 面積・砂漠から、社会の声を映す大衆音楽へ。 |
 | 024 | アンゴラ | 優先度B | アフリカ南西部の産油国。大西洋に面する。 | ポルトガル語が公用語で、音楽・舞踊のセンバやキゾンバで知られる。[根拠][B024a] [根拠][B024b] [根拠][B024c] | 石油と位置から、言語と世界に広がった文化へ。 |
@@ -177,13 +177,13 @@
 | ID | 国・地域 | 区分 | 変更前／現行の文 | 提案・適用文 | 方針・理由 |
 |---|---|---|---|---|---|
 | 031 | アゼルバイジャン | 優先度A（適用済み） | カスピ海に面する産油国。欧州とアジアの境。 | 南コーカサス東部、カスピ海西岸に位置する産油国。 | 欧州とアジアの境界は定義により異なるため、位置を具体化する。 |
-| 051 | アルメニア | 優先度A（適用済み） | コーカサスの内陸国。世界最古級のキリスト教国。 | 南コーカサスの内陸国。世界で初めてキリスト教を国教としたとされる。 | 曖昧な「最古級」を、歴史上の具体的な特徴にする。（S6） |
-| 196 | キプロス | 優先度A（適用済み） | 地中海東部の島国。南北に分断されている。 | 地中海東部の島国。国連管理の緩衝地帯を挟み、南北に事実上分断されている。 | 「事実上」と緩衝地帯を加え、政治状況をより正確かつ中立的に示す。（S7） |
-| 275 | パレスチナ | 優先度A（適用済み） | ヨルダン川西岸とガザ地区からなる。 | ヨルダン川西岸地区（東エルサレムを含む）と地中海沿岸のガザ地区は、互いに離れている。 | 二地域が地理的に連続していないことと、国連文書上の範囲を示す。（S8） |
-| 360 | インドネシア | 優先度A（適用済み） | 世界最多の島々(約1.7万)からなる国。 | 赤道をまたぐ世界最大の群島国家で、約1万7000の島からなる。 | 「島数世界最多」は島の定義で変わるため、公的に用いられる群島国家としての表現にする。（S10） |
-| 376 | イスラエル | 優先度A（適用済み） | 地中海東岸。多くの国は大使館をテルアビブに置く。 | 地中海東岸に位置する。エルサレムの最終的な地位は未解決の争点。 | 大使館所在地は変動しうるため、首都欄を読むうえで重要な論点を直接かつ中立的に示す。（S11） |
+| 051 | アルメニア | 優先度A（適用済み） | コーカサスの内陸国。世界最古級のキリスト教国。 | 南コーカサスの内陸国。世界で初めてキリスト教を国教としたとされる。 [根拠][S6] | 曖昧な「最古級」を、歴史上の具体的な特徴にする。 |
+| 196 | キプロス | 優先度A（適用済み） | 地中海東部の島国。南北に分断されている。 | 地中海東部の島国。国連管理の緩衝地帯を挟み、南北に事実上分断されている。 [根拠][S7] | 「事実上」と緩衝地帯を加え、政治状況をより正確かつ中立的に示す。 |
+| 275 | パレスチナ | 優先度A（適用済み） | ヨルダン川西岸とガザ地区からなる。 | ヨルダン川西岸地区（東エルサレムを含む）と地中海沿岸のガザ地区は、互いに離れている。 [根拠][S8] | 二地域が地理的に連続していないことと、国連文書上の範囲を示す。 |
+| 360 | インドネシア | 優先度A（適用済み） | 世界最多の島々(約1.7万)からなる国。 | 赤道をまたぐ世界最大の群島国家で、約1万7000の島からなる。 [根拠][S10] | 「島数世界最多」は島の定義で変わるため、公的に用いられる群島国家としての表現にする。 |
+| 376 | イスラエル | 優先度A（適用済み） | 地中海東岸。多くの国は大使館をテルアビブに置く。 | 地中海東岸に位置する。エルサレムの最終的な地位は未解決の争点。 [根拠][S11] | 大使館所在地は変動しうるため、首都欄を読むうえで重要な論点を直接かつ中立的に示す。 |
 | 422 | レバノン | 優先度A（適用済み） | 地中海東岸。かつて「中東のパリ」と呼ばれた。 | 地中海東岸の細長い国で、海岸と平行にレバノン山脈が連なる。 | 「中東のパリ」は本来ベイルートの呼称で、国全体の説明には適さない。 |
-| 626 | 東ティモール | 優先度A（適用済み） | 21世紀初の独立国の一つ。ティモール島東部。 | ティモール島東部と飛び地オエクシなどからなり、2002年に独立を回復した。 | 国土は島の東半分だけではなく、飛び地と島々も含む。（S13） |
+| 626 | 東ティモール | 優先度A（適用済み） | 21世紀初の独立国の一つ。ティモール島東部。 | ティモール島東部と飛び地オエクシなどからなり、2002年に独立を回復した。 [根拠][S13] | 国土は島の東半分だけではなく、飛び地と島々も含む。 |
 | 760 | シリア | 優先度A（適用済み） | 世界最古級の都市の一つ。地中海東岸。 | 地中海東岸の国で、首都ダマスカスは世界最古級の都市の一つ。 | 「世界最古級の都市」は国ではなくダマスカスを指すため、主語を明確にする。 |
 | 887 | イエメン | 優先度A（適用済み） | アラビア半島南端。紅海の出入口に面する。 | アラビア半島南西端に位置し、紅海とアデン湾に面する。 | 「南西端」がより正確で、接する二つの海域も明確になる。 |
 | 004 | アフガニスタン | その他102件 | 内陸の山岳国。ヒンドゥークシュ山脈が広がる。 | 現在のアフガニスタン産のラピスラズリは、古代に西アジアからエジプトまで交易された。[根拠][N004] | 山岳地形から、古代の国際交易を物語る鉱物へ。 |
@@ -230,9 +230,9 @@
 
 | ID | 国・地域 | 区分 | 変更前／現行の文 | 提案・適用文 | 方針・理由 |
 |---|---|---|---|---|---|
-| 036 | オーストラリア | 優先度A（適用済み） | 国全体が一つの大陸。コアラやカンガルーで有名。 | オーストラリア大陸とタスマニア島などからなり、内陸部には広大な乾燥地帯が広がる。 | 「国全体」と「大陸」の関係が曖昧な現行文を、実際の国土構成に沿って言い換える。（S21） |
-| 296 | キリバス | 優先度A（適用済み） | 太平洋に広く散らばるサンゴ礁の島国。日付変更線の東西にまたがる。 | 赤道をまたぎ、3つの島群が太平洋に広がるサンゴ礁の国。 | 日付変更線は国全体が同じ日になるよう東へ迂回しており、現行は誤解を招く。（S9） |
-| 798 | ツバル | 優先度A（適用済み） | 海抜の低いサンゴ礁の島国。海面上昇が心配されている。 | 9つの低平なサンゴ島からなるポリネシアの国で、海面上昇の影響を受けやすい。 | 口語的な「心配」を、島数と地理的な脆弱性に替える。（S22） |
+| 036 | オーストラリア | 優先度A（適用済み） | 国全体が一つの大陸。コアラやカンガルーで有名。 | オーストラリア大陸とタスマニア島などからなり、内陸部には広大な乾燥地帯が広がる。 [根拠][S21] | 「国全体」と「大陸」の関係が曖昧な現行文を、実際の国土構成に沿って言い換える。 |
+| 296 | キリバス | 優先度A（適用済み） | 太平洋に広く散らばるサンゴ礁の島国。日付変更線の東西にまたがる。 | 赤道をまたぎ、3つの島群が太平洋に広がるサンゴ礁の国。 [根拠][S9] | 日付変更線は国全体が同じ日になるよう東へ迂回しており、現行は誤解を招く。 |
+| 798 | ツバル | 優先度A（適用済み） | 海抜の低いサンゴ礁の島国。海面上昇が心配されている。 | 9つの低平なサンゴ島からなるポリネシアの国で、海面上昇の影響を受けやすい。 [根拠][S22] | 口語的な「心配」を、島数と地理的な脆弱性に替える。 |
 | 090 | ソロモン諸島 | その他102件 | 南太平洋の島国。第二次大戦の激戦地。 | ガダルカナル島では1942年8月から翌年2月まで、太平洋戦争の転機の一つとなる激戦が続いた。[根拠][R090] | 現行の歴史題材を残し、場所・期間・意味を具体化する。 |
 | 242 | フィジー | その他102件 | 南太平洋の島国。約330の島からなる。 | 2016年、男子7人制ラグビーで、国初のオリンピックメダルとなる金を獲得した。[根拠][R242] | 島数から、国民的競技による歴史的な快挙へ。 |
 | 520 | ナウル | その他102件 | 太平洋の孤島国。世界最小の共和国のひとつ。リン鉱石で栄えた。 | 公式の首都を定めていない共和国。[根拠][R520] | 首都欄の「ヤレン（政庁所在地）」の意味が分かる制度上の例外を示す。 |
@@ -254,29 +254,31 @@
 
 ### 優先度A分（S番号）
 
-- **S1:** [Costa Rica Constitution, Article 12 — Constitute Project](https://www.constituteproject.org/constitution/Costa_Rica_2011.pdf)
-- **S2:** [Falkland Islands (Malvinas) — United Nations and Decolonization](https://www.un.org/dppa/decolonization/en/content/falkland-islands-malvinas)
-- **S3:** [Greenland is self-governing within the Kingdom of Denmark — Government of Greenland](https://naalakkersuisut.gl/Nyheder/2026/01/1301_talepunkter?sc_lang=da)
-- **S5:** [Types of EU institutions and bodies — European Union](https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/types-institutions-and-bodies_en)
-- **S6:** [History of Armenia — Embassy of Armenia to the Holy See](https://vatican.mfa.am/en/history)
-- **S7:** [About the Buffer Zone — United Nations Peacekeeping Force in Cyprus](https://unficyp.unmissions.org/en/about-buffer-zone)
-- **S8:** [Physical separation of the West Bank, including East Jerusalem, and Gaza — United Nations A/71/554](https://documents.un.org/access.nsf/get?DS=A%2F71%2F554&Lang=E&OpenAgent=)
-- **S9:** [Kiribati location and the International Date Line — Kiribati Tourism Authority](https://www.kiribatitourism.gov.ki/kiribati-pacific-ocean-location/1000/)
-- **S10:** [Indonesia as the world's largest archipelagic country — Cabinet Secretariat of Indonesia](https://setkab.go.id/en/indonesia-has-enormous-potential-to-become-global-maritime-axis-president-jokowi-says/)
-- **S11:** [Status of Jerusalem can only be resolved through negotiations — United Nations](https://press.un.org/en/2023/sgsm21684.doc.htm)
-- **S13:** [Territory includes Oecussi, Atauro and Jaco — Government of Timor-Leste](https://timor-leste.gov.tl/?lang=en&p=91)
-- **S14:** [Standard country or area codes for statistical use, M49 — United Nations Statistics Division](https://unstats.un.org/unsd/methodology/m49/)
-- **S15:** [Climate Change 2022: Impacts, Adaptation and Vulnerability, Chapter 9 Africa — IPCC](https://www.ipcc.ch/report/ar6/wg2/chapter/chapter-9/)
-- **S17:** [Overview of Liberia — Government of Liberia](https://www.mlg.gov.lr/general/overview-liberia)
-- **S18:** [2026 Dakar Rally route in Saudi Arabia — Dakar Rally](https://www.dakar.com/en/news//a-saudi-odyssey/197743)
-- **S20:** [Western Sahara — United Nations and Decolonization](https://www.un.org/dppa/decolonization/en/node/703)
-- **S21:** [About Australia — Australian Government Department of Foreign Affairs and Trade](https://www.dfat.gov.au/about-australia)
-- **S22:** [Tuvalu Assessment of Climate Hazards — Government of Tuvalu](https://www.tuvaluclimatechange.gov.tv/sites/default/files/2025-07/Tuvalu_Assessment%20of%20Climate%20Hazards%20Technical%20Report_final.pdf)
-- **S24:** [Białowieża Forest — UNESCO World Heritage Centre](https://whc.unesco.org/en/list/33)
-- **S25:** [Key facts about Sweden — Sweden.se](https://sweden.se/life/society/key-facts-about-sweden) / [Midnight Sun in Sweden — Visit Sweden](https://visitsweden.com/where-to-go/northern-sweden/arctic-sweden/midnight-sun/)
-- **S26:** [Constitution of Ireland, Article 8 — Irish Statute Book](https://www.irishstatutebook.ie/eli/cons/en/html) / [Irish Harping and the national symbol — Government of Ireland](https://www.gov.ie/en/department-of-culture-communications-and-sport/press-releases/irish-harping-recognised-by-unesco-as-irish-living-heritage/)
+[S1]: https://www.constituteproject.org/constitution/Costa_Rica_2011.pdf "Costa Rica Constitution, Article 12 — Constitute Project"
+[S2]: https://www.un.org/dppa/decolonization/en/content/falkland-islands-malvinas "Falkland Islands (Malvinas) — United Nations and Decolonization"
+[S3]: https://naalakkersuisut.gl/Nyheder/2026/01/1301_talepunkter?sc_lang=da "Greenland is self-governing within the Kingdom of Denmark — Government of Greenland"
+[S5]: https://european-union.europa.eu/institutions-law-budget/institutions-and-bodies/types-institutions-and-bodies_en "Types of EU institutions and bodies — European Union"
+[S6]: https://vatican.mfa.am/en/history "History of Armenia — Embassy of Armenia to the Holy See"
+[S7]: https://unficyp.unmissions.org/en/about-buffer-zone "About the Buffer Zone — United Nations Peacekeeping Force in Cyprus"
+[S8]: https://documents.un.org/access.nsf/get?DS=A%2F71%2F554&Lang=E&OpenAgent= "Physical separation of the West Bank, including East Jerusalem, and Gaza — United Nations A/71/554"
+[S9]: https://www.kiribatitourism.gov.ki/kiribati-pacific-ocean-location/1000/ "Kiribati location and the International Date Line — Kiribati Tourism Authority"
+[S10]: https://setkab.go.id/en/indonesia-has-enormous-potential-to-become-global-maritime-axis-president-jokowi-says/ "Indonesia as the world's largest archipelagic country — Cabinet Secretariat of Indonesia"
+[S11]: https://press.un.org/en/2023/sgsm21684.doc.htm "Status of Jerusalem can only be resolved through negotiations — United Nations"
+[S13]: https://timor-leste.gov.tl/?lang=en&p=91 "Territory includes Oecussi, Atauro and Jaco — Government of Timor-Leste"
+[S14]: https://unstats.un.org/unsd/methodology/m49/ "Standard country or area codes for statistical use, M49 — United Nations Statistics Division"
+[S15]: https://www.ipcc.ch/report/ar6/wg2/chapter/chapter-9/ "Climate Change 2022: Impacts, Adaptation and Vulnerability, Chapter 9 Africa — IPCC"
+[S17]: https://www.mlg.gov.lr/general/overview-liberia "Overview of Liberia — Government of Liberia"
+[S18]: https://www.dakar.com/en/news//a-saudi-odyssey/197743 "2026 Dakar Rally route in Saudi Arabia — Dakar Rally"
+[S20]: https://www.un.org/dppa/decolonization/en/node/703 "Western Sahara — United Nations and Decolonization"
+[S21]: https://www.dfat.gov.au/about-australia "About Australia — Australian Government Department of Foreign Affairs and Trade"
+[S22]: https://www.tuvaluclimatechange.gov.tv/sites/default/files/2025-07/Tuvalu_Assessment%20of%20Climate%20Hazards%20Technical%20Report_final.pdf "Tuvalu Assessment of Climate Hazards — Government of Tuvalu"
+[S24]: https://whc.unesco.org/en/list/33 "Białowieża Forest — UNESCO World Heritage Centre"
+[S25a]: https://sweden.se/life/society/key-facts-about-sweden "Key facts about Sweden — Sweden.se"
+[S25b]: https://visitsweden.com/where-to-go/northern-sweden/arctic-sweden/midnight-sun/ "Midnight Sun in Sweden — Visit Sweden"
+[S26a]: https://www.irishstatutebook.ie/eli/cons/en/html "Constitution of Ireland, Article 8 — Irish Statute Book"
+[S26b]: https://www.gov.ie/en/department-of-culture-communications-and-sport/press-releases/irish-harping-recognised-by-unesco-as-irish-living-heritage/ "Irish Harping and the national symbol — Government of Ireland"
 
-### 優先度B・その他102件分（[根拠]リンク）
+### 優先度B・その他102件分
 
 [B024a]: https://www.tribunalconstitucional.ao/pt/artigos-da-constituicao/
 [B024b]: https://anicc.gov.ao/web/noticias/ministerio-da-cultura-lanca-oficialmente-candidatura-do-semba-a-unesco
