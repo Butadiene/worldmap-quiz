@@ -402,7 +402,7 @@ body {
 .setup-install p { margin: 0 0 4px; }
 .setup-install p:last-child { margin-bottom: 0; }
 
-/* カード最下部: 未収録国リスト（免責事項は上部 .setup-credit 内） */
+/* カード最下部の補足事項（免責事項は上部 .setup-credit 内） */
 .setup-legal {
   border-top: 1px solid #e4ebed; margin-top: 18px; padding-top: 12px;
   font-size: 10px; color: var(--ink-faint); line-height: 1.7;

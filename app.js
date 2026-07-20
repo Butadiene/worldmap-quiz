@@ -6,7 +6,7 @@
 
   // Shown on the setup screen so on-device users can confirm an update landed.
   // MUST be bumped together with CACHE in sw.js (same version number).
-  const APP_VERSION = "v43";
+  const APP_VERSION = "v46";
 
   // 地図データの視点 (POV)。"jpn" = 日本視点: world-atlas を基に、係争地の帰属を
   // Natural Earth 公式の日本視点データ (ne_10m_admin_0_countries_jpn) に合わせた
@@ -86,6 +86,7 @@
   const MICRO_TAP_PAD = 6;   // 指の太さぶんの追加許容 (半径に足す)
 
   // Finer sub-regions, keyed by ISO 3166-1 numeric so countries.js stays untouched.
+  // 国連統計部 M49 を基本とし、学習用の例外・重複カテゴリを一部含む。
   const SUBREGIONS = {
     east_asia:       { label: "東アジア",       ids: ["156","158","392","408","410","496"] },
     southeast_asia:  { label: "東南アジア",     ids: ["096","104","116","360","418","458","608","626","702","704","764"] },
@@ -1571,6 +1572,7 @@
   // （例: 北アフリカ選択中にアジアのトレイを開いた状態）現在の選択が常に読める。
   function regionDisplayName(r) {
     if (r === "asia" || r === "europe" || r === "africa" || r === "oceania") return REGION_LABEL[r] + "全体";  // チップの文言と揃える
+    if (r === "north_america") return "北アメリカ全体";
     if (REGION_LABEL[r]) return REGION_LABEL[r];
     const sub = SUBREGIONS[r];
     return sub ? sub.label : "";

@@ -1,6 +1,6 @@
 /* Service worker — offline caching for 世界地図クイズ
    Bump CACHE version to force an update after changing files. */
-const CACHE = "worldquiz-v43";
+const CACHE = "worldquiz-v46";
 
 // 地図データの視点 (POV)。app.js の MAP_POV と必ず一致させること。
 // "jpn" = 自前ホストの日本視点データ / "default" = world-atlas CDN。
