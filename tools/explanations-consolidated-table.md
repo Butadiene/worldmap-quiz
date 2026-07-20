@@ -1,0 +1,396 @@
+# 一言解説 再提案 統合表（優先度B 63件＋その他102件）
+
+> **状態:** 提案のみ。`explanations.js` には未適用。
+>
+> **作成日:** 2026-07-20
+>
+> **対象:** [優先度Bの再提案63件](explanations-b-reproposal.md)と[その他102件の再提案](explanations-remaining-reproposal.md)を1つの表にまとめた全165件。内容は両文書の「再提案（Tips重視）」列をそのまま転記したもので、新規の提案は含まない。
+
+## この表の見方
+
+- **区分** — `優先度B`: [前回の改善案](explanations-improvement-proposals.md)で優先度Bとした63件の再提案。`その他102件`: 前回の改善案に含まれなかった102件の再提案。
+- **★**（方針欄）— ユーザーが好みの例として挙げた14件。現行文の核を残して磨いた案。
+- 優先度B分の「前回B案」（地理学習優先の旧案）は本表では省略。比較したい場合は[元の文書](explanations-b-reproposal.md)を参照。
+- 各行の[根拠]リンクは、政府・国際機関・公的機関などの確認資料（巻末にまとめて掲載）。
+
+## 南北アメリカ（32件 = 優先度B 16件＋その他 16件）
+
+| ID | 国・地域 | 区分 | 現行 | 再提案（Tips重視） | 方針 |
+|---|---|---|---|---|---|
+| 028 | アンティグア・バーブーダ | 優先度B | カリブ海東部。アンティグア島とバーブーダ島からなる。 | 英国海軍の旧造船所と関連遺跡群は、奴隷労働の歴史も伝える世界遺産。[根拠][B028] | 島の構成から、植民地史を伝える文化遺産へ。 |
+| 032 | アルゼンチン | その他102件 | 南米で2番目に広い。パンパの草原とタンゴで有名。 | ブエノスアイレスとモンテビデオの庶民層から生まれたタンゴは、両国共同のユネスコ無形文化遺産。[根拠][R032] | 名物名だけでなく、その社会的起源とウルグアイとの共有文化を示す。 |
+| 052 | バルバドス | 優先度B | カリブ海の東端に位置する小さな島国。 | 2021年に君主制から共和制へ移行し、大統領を国家元首とした。[根拠][B052] | 位置ではなく、近年の統治制度の転換を紹介。 |
+| 068 | ボリビア | その他102件 | 南米の内陸国。憲法上の首都はスクレ。アンデス高地。 | スペイン語に加え、36の先住民言語を憲法で公用語に定める多言語国家。[根拠][R068] | 位置・首都・高地から、憲法に表れる言語文化の多様性へ。 |
+| 076 | ブラジル | 優先度B | 南米最大の国。アマゾン川とサッカーで有名。 | 南米最大の国。アマゾン川流域とサッカー文化で知られる。[根拠][B076] | **★ 好みの核を維持。** 地理と文化の二つの手掛かりを残す。 |
+| 084 | ベリーズ | その他102件 | 中米で唯一の英語公用語国。カリブ海に面する。 | 1961年に旧首都ベリーズシティがハリケーンで大きな被害を受け、内陸に新首都ベルモパンが建設された。[根拠][R084] | 現在の首都が生まれた防災と都市計画の歴史を紹介する。 |
+| 124 | カナダ | 優先度B | 世界で2番目に広い。メープルとカエデの旗で有名。 | 世界で2番目に面積が広い。メープルシロップと、カエデの葉を描いた国旗で知られる。[根拠][B124] | **★ 好みの核を維持。** 「広い」の基準とメープルの意味を明確化。 |
+| 152 | チリ | その他102件 | アンデスと太平洋に挟まれた細長い国。 | 詩人ガブリエラ・ミストラルとパブロ・ネルーダは、ともにノーベル文学賞を受賞した。[根拠][R152] | 国土の形から、二人の詩人を生んだ文学文化へ。 |
+| 170 | コロンビア | 優先度B | 南米北西部。コーヒーの名産地。 | アンデス山地でコーヒー栽培が盛んで、「コロンビアのコーヒー産地の文化的景観」は世界遺産。[根拠][B170] | **★ 好みの核を維持。** コーヒーを生産物だけでなく文化景観として紹介。 |
+| 192 | キューバ | 優先度B | カリブ海最大の島国。葉巻とクラシックカーで有名。 | カリブ海最大の島国。伝統的な葉巻産業と、街を走るクラシックカーで知られる。[根拠][B192a] [根拠][B192b] | **★ 好みの核を維持。** 二つの印象的な文化・産業を具体化。 |
+| 212 | ドミニカ国 | その他102件 | カリブ海の火山島。ドミニカ共和国とは別の国。 | 国旗の中央には、同国だけに生息する国鳥シセロウが描かれている。[根拠][R212] | 名前の取り違え注意から、国旗と固有種を結ぶ記憶点へ。 |
+| 214 | ドミニカ共和国 | その他102件 | イスパニョーラ島の東側を占める。 | 国民的な音楽と踊りのメレンゲは、祝い事から選挙運動まで社会に根づくユネスコ無形文化遺産。[根拠][R214] | 島内の位置から、暮らしと政治にも広がる音楽文化へ。 |
+| 218 | エクアドル | その他102件 | 赤道直下。ガラパゴス諸島を領有する。 | 2008年憲法は、自然（パチャママ）そのものに権利があると定めた。[根拠][R218] | 赤道や島から、自然観を法制度に取り込んだ特徴へ。 |
+| 222 | エルサルバドル | その他102件 | 中米で最も小さく、人口密度が高い国。 | トウモロコシ生地に具を包むププサは、法律で「国民食」に定められている。[根拠][R222] | 面積・人口から、法的にも位置付けられた食文化へ。 |
+| 308 | グレナダ | その他102件 | ナツメグなど香辛料で知られる「スパイスの島」。 | 国旗にはナツメグの実が描かれ、「スパイスの島」と香辛料産業の歴史を象徴する。[根拠][R308] | 現行の愛称を残し、国旗と伝統産業の結び付きまで掘り下げる。 |
+| 320 | グアテマラ | その他102件 | マヤ文明の遺跡が残る中米の国。 | 国鳥ケツァールの名は、国の通貨単位にも使われている。[根拠][R320] | 遺跡の一般論から、国の象徴と通貨を結ぶ覚えやすいTipへ。 |
+| 328 | ガイアナ | 優先度B | 南米北東部。英語公用語で文化はカリブ寄り。 | 南米で唯一英語を公用語とし、首都ジョージタウンにはカリブ共同体の本部がある。[根拠][B328a] [根拠][B328b] | 曖昧な「カリブ寄り」を、言語と国際機関で説明。 |
+| 340 | ホンジュラス | その他102件 | 中米。カリブ海と太平洋の両方に面する。 | コパン遺跡の「神聖文字の階段」には、知られている限りマヤ文明最長の碑文が刻まれている。[根拠][R340] | 二つの海という地理から、文字文化を伝える具体的な遺産へ。 |
+| 388 | ジャマイカ | その他102件 | カリブ海の島国。レゲエ発祥の地。 | レゲエは、社会批判や抵抗、愛や人間性を伝える音楽としてユネスコ無形文化遺産に登録されている。[根拠][R388] | 「発祥」にとどめず、音楽が担ってきた社会的役割を示す。 |
+| 484 | メキシコ | 優先度B | マヤ・アステカ文明の地。北米有数の人口。 | マヤ・アステカ文明が栄え、現在も68の先住民言語群が受け継がれる。[根拠][B484] | **★ 好みの核を維持。** 古代文明と現代の言語文化をつなぐ。 |
+| 558 | ニカラグア | その他102件 | 中米最大の面積。多くの湖と火山。 | 植民地支配を風刺する劇「エル・グエグエンセ」は、先住民文化とスペイン文化を織り交ぜた無形文化遺産。[根拠][R558] | 面積・地形から、植民地史と文化の混交を伝える舞台芸術へ。 |
+| 591 | パナマ | その他102件 | 太平洋と大西洋を結ぶ運河で有名。 | 1999年、パナマ運河の運営・管理は米国からパナマへ全面移管された。[根拠][R591] | 運河の機能だけでなく、現在の運営につながる主権の歴史を示す。 |
+| 600 | パラグアイ | 優先度B | 南米中央の内陸国。 | スペイン語と先住民語のグアラニー語を公用語とする、多文化・二言語の国。[根拠][B600] | 位置の説明から、先住民語が社会に根付く特徴へ。 |
+| 604 | ペルー | その他102件 | インカ帝国とマチュピチュで有名。太平洋に面する。 | セビーチェの調理と食文化は、地域ごとに異なるレシピを受け継ぐユネスコ無形文化遺産。[根拠][R604] | インカ文明の定型像から、各地で続く現在の食文化へ。 |
+| 630 | プエルトリコ | 優先度B | カリブ海の島。アメリカの自治領。 | 米国領で、米国市民も島内に居住する限り、大統領選挙の本選には投票できない。[根拠][B630] | 政治的地位が生活上どう表れるかを具体化。 |
+| 662 | セントルシア | その他102件 | 双子の峰「ピトン」がそびえるカリブ海の火山島。 | 経済学者アーサー・ルイスと詩人デレク・ウォルコット、2人のノーベル賞受賞者を輩出した。[根拠][R662] | 火山景観から、経済学と文学にまたがる知的・文化的成果へ。 |
+| 670 | セントビンセント・グレナディーン | 優先度B | 主島セントビンセント島と多くの小島からなる。 | 首都キングスタウン近郊に、1765年開園の西半球最古の植物園がある。[根拠][B670] | 島の構成から、意外性のある歴史的施設へ。 |
+| 740 | スリナム | 優先度B | 南米最小の国。オランダ語を話す。 | 南米で唯一オランダ語を公用語とし、首都パラマリボの歴史地区は世界遺産。[根拠][B740a] [根拠][B740b] | 言語の珍しさに、植民地史を伝える都市遺産を加える。 |
+| 780 | トリニダード・トバゴ | 優先度B | カリブ海南端の島国。石油とカーニバル。 | 石油・天然ガス産業が発達し、スティールパンを生んだカーニバル文化でも知られる。[根拠][B780] | **★ 好みの核を維持。** 産業とカーニバル文化を、楽器の発祥で結び付ける。 |
+| 840 | アメリカ合衆国 | 優先度B | 50州からなる。世界有数の経済大国。 | 50州からなる連邦国家。1787年に署名された合衆国憲法は、現在も施行される成文の国家憲法として世界最古。[根拠][B840] | 変動する経済評価から、連邦制と憲法史へ。 |
+| 858 | ウルグアイ | 優先度B | 南米の小国。牛肉とサッカーで有名。 | 牧畜が盛んで、1930年の第1回サッカーW杯を開催し、そのまま初代王者となった。[根拠][B858] | **★ 好みの核を維持。** 牛肉を牧畜、サッカーを具体的な歴史へ。 |
+| 862 | ベネズエラ | 優先度B | 世界有数の石油埋蔵量。カリブ海に面する。 | ギアナ高地に、世界最大の落差をもつエンジェルフォールがある。[根拠][B862] | 資源順位を避け、地図だけでは分からない世界記録へ。 |
+
+## ヨーロッパ（36件 = 優先度B 16件＋その他 20件）
+
+| ID | 国・地域 | 区分 | 現行 | 再提案（Tips重視） | 方針 |
+|---|---|---|---|---|---|
+| 008 | アルバニア | その他102件 | バルカン半島西部、アドリア海に面する。 | 二つの独唱声部に合唱の持続音を重ねる「イソ・ポリフォニー」は、ユネスコ無形文化遺産。[根拠][R008] | 海岸の位置から、独特な多声音楽へ。 |
+| 020 | アンドラ | その他102件 | ピレネー山脈の中、フランスとスペインに挟まれた小国。 | フランス大統領とスペインのウルヘル司教が、二人の「共同公」として国家元首を務める。[根拠][R020] | 山中の小国という説明から、独特な共同元首制度へ。 |
+| 070 | ボスニア・ヘルツェゴビナ | 優先度B | バルカン半島の山がちな国。 | 紛争後に再建されたモスタルの古い橋と旧市街は、和解を象徴する世界遺産。[根拠][B070] | 短い海岸より、破壊・再建・和解の歴史を紹介。 |
+| 100 | ブルガリア | 優先度B | バルカン半島、黒海に面する。ヨーグルトで有名。 | ヨーグルト文化で知られ、伝統食品「ブルガルスコ・キセロ・ムリャコ」の名称はEUの原産地名称保護（PDO）に登録されている。[根拠][B100] | **★ 好みの核を維持。** 名物を制度的な保護と結び付ける。 |
+| 191 | クロアチア | 優先度B | アドリア海に面し、美しい海岸線で人気。 | アドリア海沿岸の歴史都市で知られ、「クラバット（cravat）」という語はクロアチア人を指すフランス語に由来する。[根拠][B191] | **★ 好みの核を維持。** 海岸の魅力に意外な語源Tipを加える。 |
+| 203 | チェコ | 優先度B | 中欧の内陸国。ビール消費量が世界有数。 | ビール文化が根付き、ピルスナーは1842年に現在のチェコ・プルゼニで誕生した。[根拠][B203] | **★ 好みの核を維持。** 変動する消費順位を、ビール史の具体例へ。 |
+| 208 | デンマーク | 優先度B | 北欧。レゴとアンデルセン童話の国。 | 玩具LEGOと、『人魚姫』『みにくいアヒルの子』の作家アンデルセンを生んだ国。[根拠][B208a] [根拠][B208b] | **★ 好みの核を維持。** 企業名と人物名の中身を具体化。 |
+| 233 | エストニア | その他102件 | バルト三国の最北。IT先進国として知られる。 | 2005年の地方選挙で、世界で初めて全国規模のインターネット投票を実施した。[根拠][R233] | 抽象的な「IT先進国」を、年と制度が分かる先駆例へ。 |
+| 250 | フランス | 優先度B | エッフェル塔とルーブル。西欧最大級の農業国。 | エッフェル塔とルーブル美術館で知られ、地方ごとに多彩なワインとチーズを育む。[根拠][B250a] [根拠][B250b] [根拠][B250c] [根拠][B250d] | **★ 好みの核を維持。** 名所に地域ごとの食文化を加える。 |
+| 276 | ドイツ | 優先度B | EU最大の経済大国。自動車産業で有名。 | ベンツは1886年に自動車の特許を取得し、1888年には妻ベルタが世界初の自動車による長距離走行を成功させた。[根拠][B276] | **★ 好みの核を維持。** 自動車産業を覚えやすい発明史へ。 |
+| 336 | バチカン市国 | その他102件 | 世界でいちばん小さな国。ローマ市内にあり、カトリックの総本山。 | 選挙権を持つ枢機卿が教皇を選ぶコンクラーベは、システィーナ礼拝堂で行われる。[根拠][R336] | 面積と宗教の一般論から、国の中で行われる教皇選挙へ。 |
+| 348 | ハンガリー | その他102件 | ドナウ川が流れる中欧の内陸国。温泉で有名。 | 木彫りの仮面と毛織りの外套をまとい、冬の終わりを祝う「ブショーヤーラーシュ」はユネスコ無形文化遺産。[根拠][R348] | 温泉の定番像から、印象に残る仮面祭りへ。 |
+| 352 | アイスランド | その他102件 | 火山と氷河、オーロラの島国。 | 議会「アルシング」の起源は930年の野外集会で、法律制定と裁判を担った。[根拠][R352] | 自然現象の列挙から、千年以上さかのぼる議会史へ。 |
+| 380 | イタリア | その他102件 | 長靴形の半島。ローマ帝国とルネサンスの地。 | ナポリのピザ職人が生地を成形し、薪窯で回しながら焼く技は、ユネスコ無形文化遺産。[根拠][R380] | 大きな時代名から、現在も受け継がれる具体的な食文化の技へ。 |
+| 428 | ラトビア | 優先度B | バルト三国の中央に位置する。 | 首都リガの歴史地区には、世界屈指のアール・ヌーヴォー建築群が残る。[根拠][B428] | バルト三国での位置から、都市文化の特徴へ。 |
+| 438 | リヒテンシュタイン | その他102件 | スイスとオーストリアに挟まれたアルプスの小国。 | 欧州で最後となる1984年に、女性の国政参政権を導入した。[根拠][R438] | 隣国と地形から、意外に新しい参政権史へ。 |
+| 440 | リトアニア | 優先度B | バルト三国の最南に位置する。 | 道端などに装飾した木の十字架を立てる伝統は、ユネスコ無形文化遺産。[根拠][B440] | 隣接関係から、独特な民俗文化へ。 |
+| 442 | ルクセンブルク | 優先度B | 世界有数の豊かな内陸小国。金融の中心。 | 国際金融センターとして発展し、EU司法裁判所などの主要機関も置かれる小国。[根拠][B442a] [根拠][B442b] | **★ 好みの核を維持。** 金融とEU制度の二面を具体化。 |
+| 470 | マルタ | その他102件 | 地中海中央部の島国。要塞都市で知られる。 | マルタ語はアラビア語などと同じセム語族に属し、ラテン文字で書かれる。[根拠][R470] | 島と要塞から、欧州では珍しい言語の系統と文字へ。 |
+| 492 | モナコ | その他102件 | 地中海に面した世界で2番目に小さな国。F1とカジノで有名。 | 1297年、フランソワ・グリマルディが修道士に変装して、モナコの要塞を奪取した。[根拠][R492] | 観光・娯楽の定番像から、現在の君主家につながる起源譚へ。 |
+| 498 | モルドバ | 優先度B | 東欧の内陸小国。ワインの産地。 | ワイン造りが盛んで、クリコバやミレシュティ・ミチには巨大な地下ワイン貯蔵庫が広がる。[根拠][B498] | 産地という一般論を、地下の「ワインの街」という記憶点へ。 |
+| 499 | モンテネグロ | 優先度B | アドリア海に面する小国。 | 国名は「黒い山」を意味し、2006年にセルビアとの国家連合から独立した。[根拠][B499a] [根拠][B499b] | 地形そのものより、国名の意味と建国史を紹介。 |
+| 528 | オランダ | その他102件 | 干拓地と運河の国。政府所在地はハーグ。 | 国旗にないオレンジ色が国を象徴するのは、王家オラニエ＝ナッサウ家に由来する。[根拠][R528] | 水辺の地理から、スポーツなどでも目立つ象徴色の由来へ。 |
+| 578 | ノルウェー | その他102件 | フィヨルドの北欧国。石油と漁業で豊か。 | ノーベル賞のうち、平和賞だけはストックホルムではなくオスロで授与される。[根拠][R578] | 地形・産業から、隣国との違いも覚えやすい国際的な制度へ。 |
+| 616 | ポーランド | その他102件 | 中欧の平原の国。ショパンの故郷。 | ワルシャワ生まれのマリー・キュリーは、夫ピエールと発見した元素ポロニウムを祖国ポーランドにちなんで命名した。[根拠][R616] | 著名な音楽家から、国名が元素名に残る科学史へ。 |
+| 620 | ポルトガル | その他102件 | ユーラシア大陸最西端。大航海時代の中心。 | 独唱を12弦のポルトガルギターなどで伴奏する都市歌謡「ファド」は、ユネスコ無形文化遺産。[根拠][R620] | 位置と大航海時代から、現在も続く音楽文化へ。 |
+| 642 | ルーマニア | 優先度B | 黒海に面する。ドラキュラ伝説のトランシルヴァニア。 | 春の訪れを祝い、赤白の糸飾り「マルツィショル」を贈る伝統がある。[根拠][B642] | 架空人物のイメージから、現在も続く季節の伝統へ。 |
+| 643 | ロシア | その他102件 | 世界最大の面積。11の時間帯にまたがる。 | エルミタージュ美術館は、1764年に女帝エカチェリーナ2世が225点の絵画を購入したことから始まった。[根拠][R643] | 国土の大きさから、帝政期の収集に始まる美術館史へ。 |
+| 674 | サンマリノ | その他102件 | イタリアに囲まれた、世界最古級の共和国。 | 二人の「執政」が共同で国家元首を務め、半年ごとに交代する。[根拠][R674] | 「古い共和国」を、現在も続く具体的な統治制度で説明。 |
+| 688 | セルビア | その他102件 | バルカン半島の内陸国。ドナウ川が流れる。 | セルビア正教の家庭で守護聖人を祝う伝統「スラヴァ」は、ユネスコ無形文化遺産。[根拠][R688] | 半島と河川から、家族単位で受け継ぐ宗教文化へ。 |
+| 703 | スロバキア | その他102件 | 中欧の内陸国。ドナウ川沿いに位置する。 | 羊飼いが奏でてきた、指穴が三つだけの長い縦笛「フヤラ」とその音楽は、ユネスコ無形文化遺産。[根拠][R703] | 一般的な位置説明から、形も音も特徴的な民族楽器へ。 |
+| 705 | スロベニア | その他102件 | アルプス南麓。アドリア海に少しだけ面する。 | 5月20日の「世界ミツバチの日」は、養蜂文化が根付くスロベニアの提案を受けて国連が定めた。[根拠][R705] | 山と海岸から、国内文化が世界の記念日になった例へ。 |
+| 724 | スペイン | 優先度B | イベリア半島。フラメンコと闘牛で有名。 | スペイン語に加え、自治州によってカタルーニャ語なども公用語となる多言語国家。[根拠][B724] | 一部地域の芸能だけで代表させず、地域文化の多様性を紹介。 |
+| 756 | スイス | その他102件 | アルプスの永世中立国。時計と金融で有名。 | 七人の連邦参事が対等に政府を担い、毎年その一人が1年任期の連邦大統領に選ばれる。[根拠][R756] | 中立・産業の定番像から、合議制の政府と短い大統領任期へ。 |
+| 804 | ウクライナ | 優先度B | 東欧の広大な穀倉地帯。「欧州のパンかご」。 | 色鮮やかな模様卵「プィーサンカ」を作る伝統は、ユネスコ無形文化遺産。[根拠][B804] | 地形・農業の定型像から、生活文化へ。 |
+| 807 | 北マケドニア | 優先度B | バルカン半島の内陸国。 | ギリシャとの合意を受け、2019年に国名を「北マケドニア」へ変更した。[根拠][B807] | 湖の位置より、現在の国名につながる外交史へ。 |
+
+## アフリカ（47件 = 優先度B 18件＋その他 29件）
+
+| ID | 国・地域 | 区分 | 現行 | 再提案（Tips重視） | 方針 |
+|---|---|---|---|---|---|
+| 012 | アルジェリア | その他102件 | アフリカ最大の面積を持つ国。大半がサハラ砂漠。 | 愛・自由・社会的圧力などを率直に歌う大衆音楽「ライ」は、ユネスコ無形文化遺産。[根拠][R-AF01] | 面積・砂漠から、社会の声を映す大衆音楽へ。 |
+| 024 | アンゴラ | 優先度B | アフリカ南西部の産油国。大西洋に面する。 | ポルトガル語が公用語で、音楽・舞踊のセンバやキゾンバで知られる。[根拠][B024a] [根拠][B024b] [根拠][B024c] | 石油と位置から、言語と世界に広がった文化へ。 |
+| 072 | ボツワナ | 優先度B | 南部アフリカの内陸国。カラハリ砂漠が広がる。 | 通貨名「プラ」は、ツワナ語で「雨」や「祝福」を意味する。[根拠][B072] | 乾燥地の国で雨を尊ぶ文化が、通貨名にも表れる。 |
+| 120 | カメルーン | 優先度B | 中部アフリカ、ギニア湾に面する。「アフリカの縮図」。 | 英語とフランス語は、憲法上同等の地位を持つ公用語。[根拠][B120] | 曖昧な通称から、歴史を反映した二言語制度へ。 |
+| 132 | カーボベルデ | その他102件 | 西アフリカ沖の大西洋に浮かぶ火山島の国。 | 声・詩・弦楽器・踊りが一体となる音楽「モルナ」は、島々の暮らしの節目を彩るユネスコ無形文化遺産。[根拠][R-AF02] | 島の位置と成り立ちから、暮らしに根付く音楽へ。 |
+| 140 | 中央アフリカ共和国 | 優先度B | アフリカ大陸のほぼ中央に位置する内陸国。 | サンゴ語は全国に通じる共通語で、フランス語とともに公用語となっている。[根拠][B140] | 国名や位置ではなく、国内を結ぶ言語を紹介。 |
+| 174 | コモロ | 優先度B | アフリカ南東沖、インド洋の火山島からなる国。 | コモロ語・アラビア語・フランス語の3言語を公用語とする。[根拠][B174a] [根拠][B174b] | 島の位置から、複数の文化圏が重なる言語制度へ。 |
+| 178 | コンゴ共和国 | 優先度B | コンゴ川西岸。赤道直下の熱帯林の国。 | コンゴ民主共和国と共有する音楽「コンゴ・ルンバ」は、ユネスコ無形文化遺産。[根拠][B178] | 対岸という地理ではなく、二つのコンゴを結ぶ共有文化へ。 |
+| 180 | コンゴ民主共和国 | その他102件 | アフリカ2番目の面積。コンゴ川と熱帯雨林。 | 1925年設立のヴィルンガ国立公園はアフリカ最古の国立公園で、マウンテンゴリラも生息する。[根拠][R-AF03] | 面積と河川から、アフリカの自然保護史と希少動物へ。 |
+| 204 | ベナン | 優先度B | 西アフリカ、ギニア湾に面する細長い国。 | ヴォドゥン発祥の地の一つで、毎年1月にその文化と信仰を祝う祭典が開かれる。[根拠][B204] | 国土の形から、世界へ広がった宗教文化のルーツへ。 |
+| 226 | 赤道ギニア | 優先度B | 中部アフリカの小さな産油国。 | アフリカで唯一スペイン語を公用語とし、フランス語・ポルトガル語も公用語。[根拠][B226] | 石油や国土構成から、珍しい三言語制度へ。 |
+| 231 | エチオピア | その他102件 | アフリカ有数の人口。コーヒー発祥の地とされる。 | 「ティムカット」では、契約の箱を模したタボットを水辺へ運び、キリストの洗礼を色鮮やかに祝う。[根拠][R-AF04] | 人口・コーヒーから、独特な宗教祭礼へ。 |
+| 232 | エリトリア | その他102件 | 紅海に面するアフリカ東部の国。 | 首都アスマラにはイタリア統治期のモダニズム建築がまとまって残り、「アフリカのモダニズム都市」として世界遺産。[根拠][R-AF05] | 海岸の位置から、植民地史を映す都市建築へ。 |
+| 262 | ジブチ | 優先度B | 紅海の出入口に位置する要衝。 | フランス語・アラビア語が公用語で、ソマリ語・アファル語が国語。[根拠][B262a] [根拠][B262b] | 「要衝」だけでなく、多言語社会として紹介。 |
+| 266 | ガボン | その他102件 | 赤道直下、大西洋に面する森林の産油国。 | エカン人の「ムヴェト・オイェン」は、弦楽器・歌・踊りで歴史や価値観を伝える英雄叙事詩の伝統。[根拠][R-AF06] | 森林・石油から、口承で伝える歴史と音楽へ。 |
+| 288 | ガーナ | その他102件 | 西アフリカ、ギニア湾に面するカカオと金の産地。 | 細い布を織り合わせる「ケンテ」は、色や文様を年齢・地位などで選び、完成品にはことわざにちなむ名も付く。[根拠][R-AF07] | 産物の列挙から、意味を織り込む伝統工芸へ。 |
+| 324 | ギニア | その他102件 | 西アフリカ、大西洋に面するボーキサイトの産地。 | 聖なるバラフォン「ソソ・バラ」は、13世紀からスンジャタ叙事詩を伝えてきたマンデ人の自由と結束の象徴。[根拠][R-AF08] | 鉱産物から、楽器と口承で伝える建国史へ。 |
+| 384 | コートジボワール | その他102件 | 世界有数のカカオ生産国。経済の中心はアビジャン。 | グロ人の仮面舞踊「ザウリ」は、彫刻・織物・歌・音楽・踊りを一つの演目に結び付ける。[根拠][R-AF09] | カカオと都市から、複数の芸術を束ねる仮面舞踊へ。 |
+| 404 | ケニア | 優先度B | サバンナの動物とサファリで有名。赤道が通る。 | 首都ナイロビには、国連環境計画と国連ハビタットの本部がある。[根拠][B404] | サファリの定型像から、国際都市としての役割へ。 |
+| 426 | レソト | その他102件 | 全土が南アフリカに囲まれた高地の国。 | 円すい形の伝統帽「モコロトロ」は、国旗の中央にも描かれる国の象徴。[根拠][R-AF10] | 内包国・高地という地理から、服飾と国旗を結ぶ象徴へ。 |
+| 434 | リビア | その他102件 | 大半がサハラ砂漠の産油国。地中海に面する。 | 砂漠都市ガダーミスの家は、1階が貯蔵、上階が家族、屋上テラスが女性の生活空間という立体構造。[根拠][R-AF11] | 砂漠・石油から、環境と暮らしに適応した建築へ。 |
+| 450 | マダガスカル | その他102件 | アフリカ南東の島国。独自の生態系で有名。 | ザフィマニリの家や墓は、釘や金具を使わず木組みで組み立て、幾何学模様に信仰や価値観を刻む。[根拠][R-AF12] | 生態系の一般論から、木工技術と模様の意味へ。 |
+| 454 | マラウイ | その他102件 | マラウイ湖に沿った細長い内陸国。 | チェワ人の仮面舞踊「グレ・ワムクル」は、結婚・葬儀・成人儀礼などで社会の教訓を演じる。[根拠][R-AF13] | 湖と国土の形から、人生の節目を支える仮面舞踊へ。 |
+| 466 | マリ | その他102件 | サハラ南縁の内陸国。ニジェール川が流れる。 | ジェンネでは毎年、住民が力を合わせて大モスクの土壁を塗り直す。[根拠][R-AF14] | 位置・河川から、共同体で守る土の建築へ。 |
+| 478 | モーリタニア | その他102件 | 大西洋に面し、大半が砂漠の国。 | シンゲッティなど四つの隊商都市には、サハラ交易で栄えたイスラム学問の写本図書館が残る。[根拠][R-AF15] | 海と砂漠から、隊商交易と学問の歴史へ。 |
+| 480 | モーリシャス | その他102件 | インド洋南西部の島国。ドードーの生息地だった。 | クレオール語で即興歌を歌い、太鼓に合わせて踊る「セガ」は、多文化社会を結ぶ伝統芸能。[根拠][R-AF16] | 絶滅動物だけでなく、現在も人々を結ぶ音楽と踊りへ。 |
+| 504 | モロッコ | 優先度B | アフリカ北西端。海峡を挟みスペインと向き合う。 | アラビア語とアマジグ語が公用語で、ミントティーで客をもてなす習慣が根付く。[根拠][B504a] [根拠][B504b] | 海峡の位置から、言語と暮らしの文化へ。 |
+| 508 | モザンビーク | 優先度B | インド洋に面する細長い国。 | 国旗には本・鍬・銃が描かれ、それぞれ教育・生産・防衛を象徴する。[根拠][B508] | 国土の形から、珍しい国旗の図柄と意味へ。 |
+| 516 | ナミビア | その他102件 | 大西洋岸に世界最古級のナミブ砂漠を持つ。 | 憲法が、生態系・生物多様性の維持と天然資源の持続可能な利用を国家方針として定める。[根拠][R-AF17] | 砂漠の地理から、環境保全を明記する憲法へ。 |
+| 562 | ニジェール | その他102件 | サハラ砂漠が大半を占める内陸国。 | アガデスの大モスクには、泥れんが造りでは世界最高とされる27mのミナレットが立つ。[根拠][R-AF18] | 砂漠・内陸から、土の建築技術と記録へ。 |
+| 566 | ナイジェリア | 優先度B | アフリカ最多の人口を持つ産油国。 | 映画産業「ノリウッド」は、独自の制作・流通モデルで発展した。[根拠][B566a] [根拠][B566b] | 人口・石油から、現代の文化産業へ。 |
+| 624 | ギニアビサウ | その他102件 | 西アフリカの小国。多くの島々を持つ。 | 首都ビサウのカーニバルでは、各地域を代表する打楽器隊や踊り手、聖なる動物を表す仮面が練り歩く。[根拠][R-AF19] | 国土構成から、国内の文化多様性が集う祭典へ。 |
+| 678 | サントメ・プリンシペ | その他102件 | 赤道直下、ギニア湾に浮かぶ二つの火山島の国。 | 野外劇「チロリ」では皇帝の息子も裁かれ、有罪となる物語を通じて法の下の平等を伝える。[根拠][R-AF20] | 島の位置と成り立ちから、社会規範を伝える演劇へ。 |
+| 690 | セーシェル | 優先度B | インド洋の楽園と呼ばれるリゾートの島国。 | 世界最大の種子をつけるフタゴヤシ「ココ・デ・メール」の原産地。[根拠][B690] | 観光宣伝や面積順位から、固有の植物へ。 |
+| 694 | シエラレオネ | その他102件 | 西アフリカ、大西洋に面するダイヤの産地。 | 首都フリータウンは、1792年に奴隷状態から解放され北米から渡った人々を中心に築かれた。[根拠][R-AF21] | ダイヤから、首都名にも残る解放と移住の歴史へ。 |
+| 706 | ソマリア | その他102件 | アフリカの角に位置する。インド洋に面する。 | ソマリ語は1972年にラテン文字を公式採用し、英語アルファベットのうちp・v・zを使わない。[根拠][R-AF22] | 半島と海の位置から、文字改革と言語の特徴へ。 |
+| 710 | 南アフリカ | 優先度B | 3つの首都を持つ。金とダイヤの産地。 | 2023年に南アフリカ手話が加わり、公用語は12言語となった。[根拠][B710] | 資源や位置から、多言語社会と包摂制度へ。 |
+| 716 | ジンバブエ | その他102件 | ビクトリア滝とジンバブエ遺跡で知られる内陸国。 | 金属片を親指で弾く楽器「ムビラ」は、歴史や社会への教訓を歌で伝える。[根拠][R-AF23] | 名所の列挙から、音楽で受け継ぐ歴史と教訓へ。 |
+| 728 | 南スーダン | その他102件 | 2011年独立の、世界で最も新しい国の一つ。 | 暫定憲法はすべての先住言語を国語とし、英語を公用の作業言語に定める。[根拠][R-AF24] | 独立年から、多民族社会を映す言語制度へ。 |
+| 729 | スーダン | その他102件 | 青ナイルと白ナイルが合流する砂漠の国。 | 古代クシュ王国の都メロエには、王墓のピラミッド群と神殿・宮殿の遺構が残る。[根拠][R-AF25] | 河川と砂漠から、ナイル流域の古代王国へ。 |
+| 748 | エスワティニ | 優先度B | 南部アフリカの小さな王国。旧称スワジランド。 | 国王を元首とし、2018年に国名をスワジランドからエスワティニへ変更した。[根拠][B748] | 旧称の列挙から、王制と改称の経緯へ。 |
+| 768 | トーゴ | その他102件 | 西アフリカの細長い国。ギニア湾に面する。 | バタマリバ人の泥の塔状住宅「タキエンタ」は、住居であると同時に祖先をまつる場でもある。[根拠][R-AF26] | 国土の形から、住まいと信仰が重なる建築へ。 |
+| 788 | チュニジア | その他102件 | 地中海に面し、カルタゴ遺跡が残る。 | 唐辛子を天日干しして作る調味料ハリッサは、家庭の食卓に欠かせないユネスコ無形文化遺産。[根拠][R-AF27] | 海と古代遺跡から、現在の家庭に根付く食文化へ。 |
+| 800 | ウガンダ | その他102件 | 赤道直下。ビクトリア湖に面する内陸国。 | ムトゥバの木の内皮を木槌でたたいて作る樹皮布は、織物より古い技法とされる。[根拠][R-AF28] | 赤道・湖から、木の皮を布にする伝統技術へ。 |
+| 818 | エジプト | 優先度B | ピラミッドとナイル川。アフリカ有数の人口。 | コプト語は古代エジプト語の最終段階で、現在も教会の典礼に受け継がれる。[根拠][B818a] [根拠][B818b] | ピラミッドの定型像から、古代と現代をつなぐ言語へ。 |
+| 834 | タンザニア | 優先度B | キリマンジャロとサファリで有名。最大都市はダルエスサラーム。 | 1964年にタンガニーカとザンジバルが統合して成立した連合共和国。[根拠][B834] | 山やサファリから、現在の国を形づくった建国史へ。 |
+| 854 | ブルキナファソ | その他102件 | 西アフリカの内陸国。サヘル地帯に位置する。 | 首都ワガドゥグーでは、半世紀以上続くアフリカ映画の祭典「FESPACO」が隔年で開かれる。[根拠][R-AF29] | 内陸・サヘルから、アフリカ映画が集う国際祭典へ。 |
+
+## アジア（39件 = 優先度B 9件＋その他 30件）
+
+| ID | 国・地域 | 区分 | 現行 | 再提案（Tips重視） | 方針 |
+|---|---|---|---|---|---|
+| 004 | アフガニスタン | その他102件 | 内陸の山岳国。ヒンドゥークシュ山脈が広がる。 | 現在のアフガニスタン産のラピスラズリは、古代に西アジアからエジプトまで交易された。[根拠][N004] | 山岳地形から、古代の国際交易を物語る鉱物へ。 |
+| 048 | バーレーン | その他102件 | ペルシャ湾に浮かぶ島国。産油と金融の国。 | 石油以前は天然真珠の採取と交易で栄え、その歴史を伝える「真珠採取の道」は世界遺産。[根拠][N048] | 現代産業の列挙から、石油以前の島の歴史へ。 |
+| 050 | バングラデシュ | 優先度B | ガンジス川デルタに広がる人口密度の高い国。 | 2月21日の「国際母語デー」は、ベンガル語を守る言語運動を背景に同国が提唱した。[根拠][B050] | デルタや人口から、世界的な記念日につながる言語史へ。 |
+| 064 | ブータン | その他102件 | ヒマラヤの仏教王国。国民総幸福(GNH)で知られる。 | 国民総幸福（GNH）を国づくりの理念とし、憲法は国土の60%以上を森林として保つよう定める。[根拠][N064] | GNHを、環境政策に表れた具体的な理念として紹介。 |
+| 096 | ブルネイ | その他102件 | ボルネオ島北部の小さな産油国。 | マレー文化・イスラム・君主制を柱とする「マレー・イスラム王制」を国の理念に掲げる。[根拠][N096] | 位置と石油から、独自の国家理念へ。 |
+| 104 | ミャンマー | その他102件 | 東南アジアの国。最大都市はヤンゴン。 | 世界遺産バガンには、11〜13世紀の仏教寺院や仏塔など約3,600の記念物が記録されている。[根拠][N104] | 一般的な位置・都市情報から、仏教文化を伝える具体的な規模へ。 |
+| 116 | カンボジア | その他102件 | アンコールワット遺跡で有名。メコン川が流れる。 | 国の象徴アンコール・ワットは、国旗の中央にも描かれている。[根拠][N116] | 既存の名所を、国家の象徴としての意外な使われ方へつなげる。 |
+| 144 | スリランカ | その他102件 | インド洋の島国。紅茶の産地。最大都市はコロンボ。 | 1960年、シリマヴォ・バンダラナイケが世界初の女性首相となった。[根拠][N144] | 島・紅茶・都市の列挙から、世界政治史の出来事へ。 |
+| 156 | 中国 | 優先度B | 世界有数の人口。万里の長城で有名。 | 万里の長城は一本の壁ではなく、歴代王朝が築いた城壁・砦・のろし台などからなる防衛網。[根拠][B156] | 有名な遺産を、誤解されやすい構造まで一歩深く説明。 |
+| 158 | 台湾 | その他102件 | 東アジアの島。半導体産業で知られる。 | 半導体の設計・製造・組立・検査までそろう、世界的な産業集積を持つ。[根拠][N158] | 「半導体産業」を、強みの中身が分かる説明に具体化。 |
+| 268 | ジョージア | その他102件 | コーカサスの国。ワイン発祥の地の一つ。 | 卵形の土器クヴェヴリを地中に埋めてワインを造る伝統は、ユネスコ無形文化遺産。[根拠][N268] | 起源の曖昧な表現から、現在も続く独特な醸造法へ。 |
+| 356 | インド | 優先度B | 世界有数の人口。ガンジス川とタージマハル。 | 憲法の第8附則には22言語が掲げられ、多言語社会を形づくる。[根拠][B356] | 人口・名所から、制度に表れる言語の多様性へ。 |
+| 364 | イラン | その他102件 | ペルシャの歴史を持つ産油国。 | 春分に新年を祝うノウルーズは、イランを含む広い文化圏で3,000年以上受け継がれる。[根拠][N364] | 石油から、周辺地域とも共有する長い祝祭文化へ。 |
+| 368 | イラク | その他102件 | チグリス・ユーフラテス川の「文明の揺りかご」。 | 古代都市ウルク・ウル・エリドゥでは、文字や記念建築、複雑な都市社会がいち早く発達した。[根拠][N368] | 比喩だけで終えず、「文明の揺りかご」の具体的な中身を示す。 |
+| 392 | 日本 | その他102件 | アジア東端の島国。四つの主要な島からなる。 | 1964年に東海道新幹線が開業し、世界の高速鉄道の先駆けとなった。[根拠][N392] | 自明な国土構成から、世界に影響した交通技術史へ。 |
+| 398 | カザフスタン | その他102件 | 世界最大の内陸国。中央アジアの草原地帯。 | バイコヌール宇宙基地は、世界初の人工衛星と、初の有人地球周回飛行を送り出した。[根拠][N398] | 面積と草原から、宇宙開発史の舞台へ。 |
+| 400 | ヨルダン | その他102件 | 死海とペトラ遺跡で知られる中東の国。 | 岩壁を削った都市ペトラは、香料・絹・香辛料を運ぶナバテア人の隊商交易で栄えた。[根拠][N400] | 名所名だけでなく、都市が栄えた理由まで伝える。 |
+| 408 | 北朝鮮 | 優先度B | 朝鮮半島北部に位置する。 | 北朝鮮では標準語を「文化語」と呼び、韓国とは異なる言葉の規範を用いる。[根拠][B408] | 国名から分かる位置より、分断後に分かれた言語規範へ。 |
+| 410 | 韓国 | 優先度B | 朝鮮半島南部。K-POPと先端産業で知られる。 | K-POPで知られ、文字ハングルは15世紀に朝鮮王朝の世宗が公布した。[根拠][B410] | 現代文化の入口を残し、文字の歴史へつなぐ。 |
+| 414 | クウェート | その他102件 | ペルシャ湾岸の産油国。 | 石油以前は真珠採取が主な富の源で、伝統船ダウで海へ出る文化が栄えた。[根拠][N414] | 石油だけで語らず、それ以前の海洋文化へ。 |
+| 417 | キルギス | その他102件 | 中央アジアの山岳内陸国。天山山脈が広がる。 | 英雄叙事詩三部作「マナス、セメテイ、セイテク」は、民族の歴史を語り継ぐ無形文化遺産。[根拠][N417] | 山岳地形から、口承で受け継ぐ歴史と文化へ。 |
+| 418 | ラオス | その他102件 | 東南アジア唯一の内陸国。メコン川が流れる。 | 竹管の楽器「ケーン」が奏でる音楽は、村の祭りで歌と踊りを生むユネスコ無形文化遺産。[根拠][N418] | 内陸・河川から、参加型の音楽文化へ。 |
+| 458 | マレーシア | 優先度B | マレー半島とボルネオ島にまたがる。 | 任期5年の国王を9州の君主から選ぶ、世界でも珍しい選挙王制。[根拠][B458] | 分かれた国土から、独特な君主選出制度へ。 |
+| 462 | モルディブ | その他102件 | インド洋に連なるサンゴ礁の島々からなる。 | ディベヒ語は、右から左へ書く独自文字ターナで表す。[根拠][N462] | 島の構成から、見た目にも印象的な言語文化へ。 |
+| 496 | モンゴル | その他102件 | 大草原と遊牧の内陸国。ゴビ砂漠が広がる。 | 競馬・モンゴル相撲・弓術の三競技を中心とする祭典ナーダムは、ユネスコ無形文化遺産。[根拠][N496] | 草原の定型像から、遊牧文化を体現する祭典へ。 |
+| 512 | オマーン | その他102件 | アラビア半島南東端。乳香の産地。 | 乳香の木・隊商のオアシス・港の遺跡を結ぶ「乳香の土地」は世界遺産。[根拠][N512] | 産物名だけでなく、その生産と交易の歴史を紹介。 |
+| 524 | ネパール | その他102件 | エベレストなどヒマラヤの高峰を擁する内陸国。 | 国旗は二つの三角形を重ねた形で、憲法には24段階の作図手順まで定められている。[根拠][N524] | 高峰の定型像から、珍しい国旗と制度のTipへ。 |
+| 586 | パキスタン | その他102件 | インダス文明の地。K2など高峰を持つ。 | 女子教育を訴えたマララ・ユスフザイは、17歳で史上最年少のノーベル賞受賞者となった。[根拠][N586] | 遺跡・高峰から、現代史に残る人物と教育への働き掛けへ。 |
+| 608 | フィリピン | その他102件 | 7000以上の島からなる東南アジアの国。 | 国名「フィリピン」は、16世紀のスペイン王フェリペ2世に由来する。[根拠][N608] | 島数から、植民地史が残る国名の由来へ。 |
+| 634 | カタール | その他102件 | ペルシャ湾に突き出た半島の産ガス国。 | 国際ニュース局アルジャジーラは、1996年に首都ドーハで放送を始めた。[根拠][N634] | 半島・天然ガスから、世界に影響を与えたメディア史へ。 |
+| 682 | サウジアラビア | その他102件 | アラビア半島の大半を占める産油大国。 | コーヒーは寛大さの象徴とされ、南西部では300年以上続く栽培技術が受け継がれる。[根拠][N682] | 面積と石油から、もてなしと農業の文化へ。 |
+| 702 | シンガポール | その他102件 | マレー半島南端の都市国家。世界有数の貿易・金融拠点。 | 英語・マレー語・中国語（華語）・タミル語の4公用語を持ち、国語はマレー語。[根拠][N702] | 位置と経済評価から、多文化社会を映す言語制度へ。 |
+| 704 | ベトナム | 優先度B | 東南アジアの細長い国。フォーで有名。 | 水上人形劇は、紅河デルタの水田から生まれた約1000年の伝統芸能。[根拠][B704] | 国土の形や料理から、地理と暮らしが生んだ芸能へ。 |
+| 762 | タジキスタン | その他102件 | 中央アジアの山岳内陸国。 | 国語のタジク語はペルシャ語系だが、表記にはキリル文字を用いる。[根拠][N762a] [根拠][N762b] | 山岳地形から、歴史の重なりが見える言語と文字へ。 |
+| 764 | タイ | 優先度B | 東南アジアの王国。寺院と屋台文化で有名。 | 東南アジアで、欧米列強の植民地にならなかった唯一の国として知られる。[根拠][B764] | 観光イメージから、近代史上の特徴へ。 |
+| 784 | アラブ首長国連邦 | 優先度B | 7首長国の連邦。ドバイの高層ビルで有名。 | 7つの首長国の各君主が、国の最高評議会を構成する連邦国家。[根拠][B784] | ドバイ一都市の印象から、国名にも表れる統治制度へ。 |
+| 792 | トルコ | その他102件 | アジアと欧州にまたがる。最大都市はイスタンブール。 | 1928年、アラビア文字に代えてラテン文字を基にした新しいトルコ語アルファベットを採用した。[根拠][N792] | 大陸・都市の説明から、社会を変えた文字改革へ。 |
+| 795 | トルクメニスタン | その他102件 | 大半がカラクム砂漠の産ガス国。 | 光沢ある毛並みで知られるアハルテケ馬の繁殖と装飾の伝統は、ユネスコ無形文化遺産。[根拠][N795] | 砂漠と天然ガスから、国の文化的象徴である馬へ。 |
+| 860 | ウズベキスタン | その他102件 | シルクロードのオアシス都市を持つ二重内陸国。 | 米・肉・野菜で作るプロフ（パロフ）は、客をもてなし、人の結び付きを強める伝統料理。[根拠][N860] | シルクロード都市から、今も暮らしに根付く食文化へ。 |
+
+## オセアニア（11件 = 優先度B 4件＋その他 7件）
+
+| ID | 国・地域 | 区分 | 現行 | 再提案（Tips重視） | 方針 |
+|---|---|---|---|---|---|
+| 090 | ソロモン諸島 | その他102件 | 南太平洋の島国。第二次大戦の激戦地。 | ガダルカナル島では1942年8月から翌年2月まで、太平洋戦争の転機の一つとなる激戦が続いた。[根拠][R090] | 現行の歴史題材を残し、場所・期間・意味を具体化する。 |
+| 242 | フィジー | その他102件 | 南太平洋の島国。約330の島からなる。 | 2016年、男子7人制ラグビーで、国初のオリンピックメダルとなる金を獲得した。[根拠][R242] | 島数から、国民的競技による歴史的な快挙へ。 |
+| 520 | ナウル | その他102件 | 太平洋の孤島国。世界最小の共和国のひとつ。リン鉱石で栄えた。 | 公式の首都を定めていない共和国。[根拠][R520] | 首都欄の「ヤレン（政庁所在地）」の意味が分かる制度上の例外を示す。 |
+| 548 | バヌアツ | その他102件 | 南太平洋の火山島群からなる。 | ビスラマ語を国語とし、ビスラマ語・英語・フランス語の3言語を公用語とする。[根拠][R548] | 島嶼地理から、歴史的背景もにじむ多言語制度へ。 |
+| 554 | ニュージーランド | 優先度B | 南太平洋の島国。羊とラグビーで有名。 | 1893年、女性に国政選挙権を認めた世界初の自治国となった。[根拠][B554] | 定型的な名物から、世界の参政権史へ。 |
+| 583 | ミクロネシア連邦 | その他102件 | 太平洋西部、600以上の島々からなる連邦国家。 | 米国との「自由連合」関係にあり、外交は自ら行う一方、安全保障・国防は米国が担う。[根拠][R583] | 島数や連邦制から、独特な国際関係と役割分担へ。 |
+| 584 | マーシャル諸島 | 優先度B | 太平洋のサンゴ環礁からなる島国。 | 米国の核実験場となったビキニ環礁は、核時代の始まりを伝える世界遺産。[根拠][B584] | 島数や地形から、20世紀史を伝える場所へ。 |
+| 585 | パラオ | 優先度B | 世界有数のダイビングの海を持つ島国。日本との関係が深い。 | 2009年に世界初の国家規模のサメ保護区を設け、商業的なサメ漁を禁止した。[根拠][B585] [根拠][B585b] | 観光宣伝から、海洋保全の先駆的な制度へ。 |
+| 598 | パプアニューギニア | その他102件 | ニューギニア島東半分。多言語の国。 | 800を超える先住民言語があり、日常の共通語にはトク・ピシンが広く使われる。[根拠][R598] | 曖昧な「多言語」を、規模と共通語の名前で具体化する。 |
+| 776 | トンガ | その他102件 | 南太平洋・ポリネシアの王国。 | 1875年制定の憲法を、改正を重ねながら今も受け継ぐ立憲君主国。[根拠][R776] | 王国という一語から、長い憲政の歴史へ踏み込む。 |
+| 882 | サモア | 優先度B | 南太平洋ポリネシアの島国。 | 2011年に日付変更線の西側へ移り、12月30日を丸一日飛ばした。[根拠][B882] | 地域名だけの説明から、暦を変えた意外な出来事へ。 |
+
+## 適用状況
+
+- 本表の165件はすべて提案のみで、`explanations.js` には未適用。
+- [前回の改善案](explanations-improvement-proposals.md)で優先度Aとした35件だけが、別途アプリへ適用済み。
+- 実際に適用する場合は「再提案（Tips重視）」列を候補全文とする。
+
+## 根拠資料
+
+[B024a]: https://www.tribunalconstitucional.ao/pt/artigos-da-constituicao/
+[B024b]: https://anicc.gov.ao/web/noticias/ministerio-da-cultura-lanca-oficialmente-candidatura-do-semba-a-unesco
+[B024c]: https://governo.gov.ao/noticias/1537/cultura/musica-e-danca/kizomba-e-tchianda-sao-oficialmente-patrimonios-culturais-e-imateriais-do-pais
+[B028]: https://whc.unesco.org/en/list/1499/
+[B050]: https://www.unesco.org/en/days/mother-language
+[B052]: https://www.gov.bb/Visit-Barbados/president
+[B070]: https://whc.unesco.org/en/list/946
+[B072]: https://bankofbotswana.bw/content/history-botswana-currency
+[B076]: https://www.ibge.gov.br/biblioteca/visualizacao/periodicos/2/bn_2024_v32.pdf
+[B100]: https://eur-lex.europa.eu/eli/reg_impl/2023/1531/oj/eng
+[B120]: https://minepat.gov.cm/wp-content/uploads/2023/03/PART_IV_ENG_23.pdf
+[B124]: https://www.canada.ca/en/canadian-heritage/services/official-symbols-canada.html
+[B140]: https://www.gouv.cf/index.php/article/56/la-republique-centrafricaine
+[B156]: https://whc.unesco.org/en/list/438
+[B170]: https://whc.unesco.org/en/list/1121/
+[B174a]: https://justice.gouv.km/texte/code-electoral/
+[B174b]: https://justice.gouv.km/texte/loi-du-26-juin-2014-portant-utilisation-de-larabe-et-du-francais-langues-officielles-dans-les-ecrits-et-les-actes-de-letat/
+[B178]: https://ich.unesco.org/en/RL/congolese-rumba-01711?RL=01711
+[B191]: https://mvep.gov.hr/news-and-announcements-88954/the-opening-of-the-exhibition-the-cravat-story-and-the-ceremony-of-decorating-the-peace-monument-on-the-occasion-of-the-30th-anniversary-of-croatia-s-accession-to-the-un/247809
+[B192a]: https://www.cuba.travel/sobre-cuba/tabaco-de-cuba
+[B192b]: https://www.cuba.travel/newhome
+[B203]: https://www.visitczechia.com/en-us/b2b/scandinavia/trade/news/2023/n-pilsner-urquell-beer-experience
+[B204]: https://www.gouv.bj/article/2481/initiative-vodun-days-ministre-abimbola-devoile-contexte-contenu-allechant-festivites/
+[B208a]: https://www.lego.com/en-gb/aboutus/lego-group/the-lego-group-history
+[B208b]: https://www.visitdenmark.com/denmark/things-to-do/history-heritage/hans-christian-andersen
+[B226]: https://www.mofa.go.jp/mofaj/files/000472317.pdf
+[B250a]: https://www.toureiffel.paris/en
+[B250b]: https://www.louvre.fr/en
+[B250c]: https://agriculture.gouv.fr/le-vignoble-francais-une-diversite-unique-au-monde
+[B250d]: https://agriculture.gouv.fr/les-fromages-aop-le-savoir-faire-des-terroirs
+[B262a]: https://diplomatie.gouv.dj/djibouti-geographie
+[B262b]: https://www.presidence.dj/index.php/page/la-constitution-de-la-republique-de-djibouti
+[B276]: https://www.dpma.de/english/our_office/publications/ingeniouswomen/berthabenz_1/index.html
+[B328a]: https://londonhc.mission.gov.gy/about-guyana
+[B328b]: https://treaty.caricom.org/article-23-the-secretariat/
+[B356]: https://www.legislative.gov.in/constitution-of-india/
+[B404]: https://www.unon.org/en/content/infrastructure-investment-and-expansion
+[B408]: https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=767&board_id=6&mn_id=19&pageIndex=15
+[B410]: https://www.unesco.org/en/memory-world/hunminjeongum-manuscript
+[B428]: https://whc.unesco.org/en/list/852
+[B440]: https://ich.unesco.org/en/RL/cross-crafting-and-its-symbolism-00013
+[B442a]: https://luxembourg.representation.ec.europa.eu/qui-sommes-nous/le-luxembourg-dans-lue/luxembourg-capitale-europeenne_fr
+[B442b]: https://www.luxembourgforfinance.com/en/homepage/
+[B458]: https://www.majlisraja-raja.gov.my/en/election-of-his-majesty-yang-dipertuan-agong
+[B484]: https://atlas.inali.gob.mx/inicio
+[B498]: https://moldova.travel/en/wine-of-moldova/
+[B499a]: https://wapi.gov.me/download/54003c54-06d9-47ab-acae-485a3f94179e?version=1.0
+[B499b]: https://www.un.org/en/about-us/member-states/montenegro
+[B504a]: https://www.visitmorocco.com/en/useful-information/language
+[B504b]: https://www.visitmorocco.com/en/travel-info/food-drinks
+[B508]: https://minec.gov.mz/simbolos-nacionais/
+[B554]: https://www.women.govt.nz/about-us/history-womens-suffrage-aotearoa-new-zealand
+[B566a]: https://nfc.gov.ng/about-nfc/
+[B566b]: https://www.unesco.org/en/articles/african-film-booming-industry
+[B584]: https://whc.unesco.org/en/list/1339/
+[B585]: https://faolex.fao.org/docs/pdf/pau155684.pdf
+[B585b]: https://press.un.org/en/2009/090925_palau.doc.htm
+[B600]: https://www.bacn.gov.py/leyesparaguayas/9580/constitucion-nacional-
+[B630]: https://www.usa.gov/es/requisitos-votar
+[B642]: https://ich.unesco.org/en/RL/cultural-practices-associated-to-the-1st-of-march-01287
+[B670]: https://nationalparks.gov.vc/nationalparks/index.php/heritage/16-heritage-and-culture/8-the-botanical-gardens/
+[B690]: https://whc.unesco.org/archive/advisory_body_evaluation/261.pdf
+[B704]: https://vietnam.travel/things-to-do/vietnam-water-puppets
+[B710]: https://www.gov.za/news/media-statements/minister-zizi-kodwa-south-african-sign-language-being-recognised-official
+[B724]: https://www.boe.es/buscar/act.php?id=BOE-A-1978-31229
+[B740a]: https://gov.sr/suriname/
+[B740b]: https://whc.unesco.org/en/list/940/
+[B748]: https://www.gov.sz/images/justice/NMRF/ESWATINI-AFRICAN-CHARTER-AND-MAPUTO-PROTOCOL---final-1-.pdf
+[B764]: https://amman.thaiembassy.org/en/content/the-grand-tour-that-saved-a-nation-king-chulalongk
+[B780]: https://www.un.org/en/observances/steelpan-day
+[B784]: https://u.ae/en/about-the-uae/the-uae-government/political-system-and-government
+[B804]: https://ich.unesco.org/en/RL/pysanka-ukrainian-tradition-and-art-of-decorating-eggs-02134
+[B807]: https://mfa.gov.mk/en-GB/temi/prasanjeto-za-imeto
+[B818a]: https://www.bibalex.org/learnhieroglyphs/Lesson/LessonDetails_En.aspx?l=20
+[B818b]: https://copticorthodox.church/en/2025/07/30/stories-of-the-planted-tree-series-part-6-in-the-wednesday-meeting-roots-of-the-coptic-orthodox-church-2/
+[B834]: https://www.tanzania.go.tz/topics/union-matters
+[B840]: https://www.archives.gov/files/atlanta/education/chronological-topics/images/constitution-guide.pdf
+[B858]: https://inside.fifa.com/en/news/estadio-centenario-an-icon-of-world-football-turns-90
+[B862]: https://whc.unesco.org/en/list/701/
+[B882]: https://www.ag.gov.ws/wp-content/uploads/2024/02/International-Date-Line-Act-2011.pdf
+[N004]: https://en.unesco.org/silkroad/content/did-you-know-evolving-role-merchants-along-land-routes-silk-roads
+[N048]: https://whc.unesco.org/en/list/1364/
+[N064]: https://www.mfa.gov.bt/rbedelhi/bhutan-at-glance/environment/
+[N096]: https://www.councils.gov.bn/17-03-26-mib-subject-reflects-national-identity-sovereignty-minister/
+[N104]: https://whc.unesco.org/en/list/1588/
+[N116]: https://apsaraauthority.gov.kh/2021/06/14/angkor-wat/
+[N144]: https://www.parliament.lk/en/learn/women-in-parliament
+[N158]: https://meid.nat.gov.tw/tusa/en/SelectTaiwan/taiwan_industries
+[N268]: https://ich.unesco.org/en/RL/ancient-georgian-traditional-qvevri-wine-making-method-00870
+[N364]: https://www.unesco.org/en/days/nowruz
+[N368]: https://www.unesco.org/en/articles/preservation-marshlands-key-foster-iraqs-cultural-diversity-say-un-unesco-officials
+[N392]: https://www.mlit.go.jp/en/tetudo/tetudo_fr2_000000.html
+[N398]: https://www.nasa.gov/history/SP-4225/nasa1/nasa1.htm
+[N400]: https://whc.unesco.org/en/list/326/
+[N414]: https://e.gov.kw/sites/kgoenglish/Pages/Visitors/TourismInKuwait/ActivitiesInKuwaitTouristicActivities.aspx
+[N417]: https://ich.unesco.org/en/RL/kyrgyz-epic-trilogy-manas-semetey-seytek-00876
+[N418]: https://ich.unesco.org/en/RL/khaen-music-of-the-lao-people-01296
+[N462]: https://www.qaumiyyath.gov.mv/docs/whitepapers/language/GENERAL%20OVERVIEW%20OF%20DHIVEHI%20LANGUAGE.pdf
+[N496]: https://ich.unesco.org/en/RL/naadam-mongolian-traditional-festival-00395
+[N512]: https://whc.unesco.org/en/list/1010/
+[N524]: https://www.wipo.int/wipolex/edocs/lexdocs/laws/en/np/np029en.pdf
+[N586]: https://www.nobelprize.org/prizes/peace/2014/yousafzai/biographical/
+[N608]: https://serp-p.pids.gov.ph/publication/public/view?slug=colonial-name-colonial-mentality-and-ethnocentrism
+[N634]: https://www.aljazeera.com/about-us
+[N682]: https://ich.unesco.org/en/RL/knowledge-and-practices-related-to-cultivating-khawlani-coffee-beans-01863
+[N702]: https://sso.agc.gov.sg/Act/CONS1963?ProvIds=pr1-%2Cpr4-%2Cpr153A-
+[N762a]: https://unece.org/sites/default/files/datastore/fileadmin/DAM/hlm/prgm/cph/experts/tajikistan/Documents/UNDP.about.Tajikistan.pdf
+[N762b]: https://assets.publishing.service.gov.uk/media/634e72918fa8f534627a6e60/ROMANIZATION_OF_TAJIK-2022.pdf
+[N792]: https://www.meb.gov.tr/belirligunler/10kasim/makaleler/harf.htm
+[N795]: https://ich.unesco.org/en/RL/art-of-akhal-teke-horse-breeding-and-traditions-of-horses-decoration-01978
+[N860]: https://ich.unesco.org/en/RL/palov-culture-and-tradition-01166
+[R-AF01]: https://ich.unesco.org/en/RL/rai-popular-folk-song-of-algeria-01894 "UNESCO Intangible Cultural Heritage — Raï, popular folk song of Algeria"
+[R-AF02]: https://ich.unesco.org/en/RL/morna-musical-practice-of-cabo-verde-01469 "UNESCO Intangible Cultural Heritage — Morna, musical practice of Cabo Verde"
+[R-AF03]: https://whc.unesco.org/en/news/369 "UNESCO World Heritage Centre — Virunga National Park"
+[R-AF04]: https://ich.unesco.org/en/RL/ethiopian-epiphany-01491 "UNESCO Intangible Cultural Heritage — Ethiopian epiphany"
+[R-AF05]: https://whc.unesco.org/en/list/1550/ "UNESCO World Heritage Centre — Asmara: A Modernist African City"
+[R-AF06]: https://ich.unesco.org/en/RL/mvet-oyeng-musical-art-practices-and-skills-associated-with-the-ekang-community-02253 "UNESCO Intangible Cultural Heritage — Mvet Oyeng"
+[R-AF07]: https://ich.unesco.org/en/RL/craftsmanship-of-traditional-woven-textile-kente-02130 "UNESCO Intangible Cultural Heritage — Craftsmanship of traditional woven textile Kente"
+[R-AF08]: https://ich.unesco.org/en/RL/cultural-space-of-sosso-bala-00009 "UNESCO Intangible Cultural Heritage — Cultural space of Sosso-Bala"
+[R-AF09]: https://ich.unesco.org/en/RL/zaouli-popular-music-and-dance-of-the-guro-communities-in-cote-d-ivoire-01255 "UNESCO Intangible Cultural Heritage — Zaouli"
+[R-AF10]: https://www.gov.ls/about-lesotho/ "Government of Lesotho — About Lesotho"
+[R-AF11]: https://whc.unesco.org/en/list/362 "UNESCO World Heritage Centre — Old Town of Ghadamès"
+[R-AF12]: https://ich.unesco.org/en/RL/woodcrafting-knowledge-of-the-zafimaniry-00080 "UNESCO Intangible Cultural Heritage — Woodcrafting knowledge of the Zafimaniry"
+[R-AF13]: https://ich.unesco.org/en/RL/gule-wamkulu-00142 "UNESCO Intangible Cultural Heritage — Gule Wamkulu"
+[R-AF14]: https://whc.unesco.org/en/urban-heritage-atlas/djenne/ "UNESCO Urban Heritage Atlas — Old Towns of Djenné"
+[R-AF15]: https://whc.unesco.org/en/urban-heritage-atlas/ancient-ksour/ "UNESCO Urban Heritage Atlas — Ancient ksour of Mauritania"
+[R-AF16]: https://ich.unesco.org/en/RL/traditional-mauritian-sega-01003 "UNESCO Intangible Cultural Heritage — Traditional Mauritian Sega"
+[R-AF17]: https://www.gov.na/documents/888545/1681264/Constitution%2Bof%2Bthe%2BRepublic%2Bof%2BNamibia.pdf/eaf0a7d5-44e5-c334-dea8-bf187b3d592d "Government of Namibia — Constitution of the Republic of Namibia, Article 95(l)"
+[R-AF18]: https://whc.unesco.org/en/list/1268 "UNESCO World Heritage Centre — Historic Centre of Agadez"
+[R-AF19]: https://www.cultura.gob.es/mnantropologia/actividades/agenda/2025/carnaval.html "Spain Ministry of Culture — Carnival in Guinea-Bissau"
+[R-AF20]: https://ich.unesco.org/en/RL/tchiloli-living-theatre-of-sao-tome-and-principe-in-the-quest-of-justice-02309 "UNESCO Intangible Cultural Heritage — Tchiloli"
+[R-AF21]: https://fcc.gov.sl/wp-content/uploads/2025/07/Freetown-City-Council-Town-Hall_260625-2.pdf "Freetown City Council — Town Hall Meeting presentation"
+[R-AF22]: https://uis.unesco.org/sites/default/files/documents/understanding-what-works-in-oral-reading-assessments-2016-en_2.pdf "UNESCO Institute for Statistics — Oral reading assessments"
+[R-AF23]: https://ich.unesco.org/en/RL/art-of-crafting-and-playing-mbira-sansi-the-finger-plucking-traditional-musical-instrument-in-malawi-and-zimbabwe-01541 "UNESCO Intangible Cultural Heritage — Mbira/Sansi"
+[R-AF24]: https://mop.gov.ss/doc/SS_Transitional_Constitution.pdf "Government of South Sudan — Transitional Constitution, Article 6"
+[R-AF25]: https://whc.unesco.org/en/list/1336/ "UNESCO World Heritage Centre — Archaeological Sites of the Island of Meroe"
+[R-AF26]: https://whc.unesco.org/en/list/1140 "UNESCO World Heritage Centre — Koutammakou, the Land of the Batammariba"
+[R-AF27]: https://ich.unesco.org/en/RL/harissa-knowledge-skills-and-culinary-and-social-practices-01710 "UNESCO Intangible Cultural Heritage — Harissa"
+[R-AF28]: https://ich.unesco.org/en/RL/barkcloth-making-in-uganda-00139 "UNESCO Intangible Cultural Heritage — Barkcloth making in Uganda"
+[R-AF29]: https://www.unesco.org/biennaleluanda/2021/fr/fespaco "UNESCO — FESPACO"
+[R008]: https://ich.unesco.org/en/RL/albanian-folk-iso-polyphony-00155
+[R020]: https://www.consellgeneral.ad/fitxers/documents/constitucio/copy_of_const-en/at_download/file
+[R032]: https://ich.unesco.org/en/RL/tango-00258
+[R068]: https://www.vicepresidencia.gob.bo/IMG/pdf/nueva_constitucion_politica_del_estado.pdf
+[R084]: https://belmopancitycouncil.org/welcome/about-us/
+[R090]: https://www.history.navy.mil/browse-by-topic/wars-conflicts-and-operations/world-war-ii/1942/guadalcanal.html
+[R152]: https://www.chile.gob.cl/iran/sobre-chile/literatura-y-poesia-chilena/literatura-y-poesia-chilena
+[R212]: https://dominica.gov.dm/about-dominica/national-symbols/national-bird
+[R214]: https://ich.unesco.org/en/RL/music-and-dance-of-the-merengue-in-the-dominican-republic-01162
+[R218]: https://www.asambleanacional.gob.ec/documentos/constitucion_de_bolsillo.pdf
+[R222]: https://www.asamblea.gob.sv/sites/default/files/documents/decretos/171117_073335076_archivo_documento_legislativo.pdf
+[R233]: https://www.valimised.ee/en/internet-voting/more-about-i-voting/introduction-i-voting
+[R242]: https://www.world.rugby/news/181862/fiji-create-history-with-olympic-gold?lang=en
+[R308]: https://www.gov.gd/national-symbols
+[R320]: https://banguat.gob.gt/sites/default/files/banguat/Publica/libritos/LibritoInclusionFinanciera.pdf
+[R336]: https://www.vatican.va/news_services/press/documentation/documents/vacanza/universi_en.html
+[R340]: https://whc.unesco.org/en/list/129
+[R348]: https://ich.unesco.org/en/RL/buso-festivities-at-mohacs-masked-end-of-winter-carnival-custom-00252
+[R352]: https://whc.unesco.org/en/list/1152
+[R380]: https://ich.unesco.org/en/RL/art-of-neapolitan-pizzaiuolo-00722
+[R388]: https://ich.unesco.org/en/RL/reggae-music-of-jamaica-01398
+[R438]: https://regierung.li/medienportal-medium/16182/232219/0/medienmitteilung
+[R470]: https://kunsilltalmalti.gov.mt/national-council-for-the-maltese-language/
+[R492]: https://www.palais.mc/en/the-institution/the-prince-s-palace-of-monaco-1-16.html
+[R520]: https://micronesia.un.org/en/about/republic-nauru
+[R528]: https://www.netherlandsandyou.nl/web/slovakia/w/from-the-netherlands-to-slovakia-dutch-orange-tulips-planted-all-over-slovakia
+[R548]: https://education.gov.vu/docs/acts/Constitution%20of%20the%20Republic%20of%20Vanuatu.pdf
+[R558]: https://ich.unesco.org/en/RL/el-gueguense-00111
+[R578]: https://www.nobelprize.org/ceremonies/the-nobel-prize-award-ceremonies-and-banquets
+[R583]: https://gov.fm/the-compact-of-free-association-between-the-united-states-of-america-and-the-federated-states-of-micronesia-as-amended/
+[R591]: https://pancanal.com/resena-historica-del-canal-de-panama/
+[R598]: https://www.dfa.gov.pg/people-ethnic-groups/
+[R604]: https://ich.unesco.org/en/RL/practices-and-meanings-associated-with-the-preparation-and-consumption-of-ceviche-an-expression-of-peruvian-traditional-cuisine-01952
+[R616]: https://www.nobelprize.org/prizes/chemistry/1911/marie-curie/biographical/
+[R620]: https://ich.unesco.org/en/RL/fado-urban-popular-song-of-portugal-00563
+[R643]: https://hermitagemuseum.org/panorama/virtual_visit/new_hermitage/history/history_2/?lng=en
+[R662]: https://governorgeneral.govt.lc/nobel-laureate-week
+[R674]: https://www.visitsanmarino.com/pub2/VisitSM/en/evento/20251001_1%C2%B0ottobre-cerimonia-di-investitura-dei-capitani-reggenti-.html
+[R688]: https://ich.unesco.org/en/RL/slava-serbian-orthodox-traditional-celebration-of-ancestors-01010
+[R703]: https://ich.unesco.org/en/RL/fujara-and-its-music-00099
+[R705]: https://www.gov.si/en/registries/projects/world-bee-day/
+[R756]: https://www.admin.ch/en/the-federal-council
+[R776]: https://ago.gov.to/cms/images/LEGISLATION/PRINCIPAL/1988/1988-0002/ConstitutionofTonga.pdf_3.pdf
